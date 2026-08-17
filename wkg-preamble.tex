@@ -71,7 +71,8 @@
 \providecommand{\guidetitle}{Kato Kiosk Guide}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\footnotesize\color{weknowgreyN}\nouppercase{\leftmark}}
+% \sectionmark uses \markright, so the running head must read \rightmark.
+\fancyhead[L]{\footnotesize\color{weknowgreyN}\nouppercase{\rightmark}}
 \fancyhead[R]{\raisebox{-0.35\height}{\includegraphics[height=15pt]{wkg-logo-horizontal}}}
 \renewcommand{\headrulewidth}{0.8pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{weknowazure}\leaders\hrule height \headrulewidth\hfill}}
@@ -93,7 +94,13 @@
   {\color{weknowazure}\thesubsection}{0.6em}{}
 \titlespacing*{\section}{0pt}{20pt}{12pt}
 \titlespacing*{\subsection}{0pt}{16pt}{6pt}
-\renewcommand{\sectionmark}[1]{\markright{\thesection\quad #1}}
+% The running head takes its text from \wksecmark, not from the section
+% title, so role badges never leak into the header. \wksection and
+% \wkrolesection (defined below) set it. Subsections must not overwrite
+% the section in the head.
+\newcommand{\wksecmark}{}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\quad\wksecmark}}
+\renewcommand{\subsectionmark}[1]{}
 
 %---------------------------------------------------------------------
 % Captions
@@ -148,10 +155,37 @@
 \newcommand{\tick}{{\color{weknowsea}$\checkmark$}}
 \newcommand{\emptybox}{{\color{weknowgreyM}$\square$}}
 
-% Role badge for section headings, e.g. \role{Account Manager}
-\newcommand{\role}[1]{\texorpdfstring{%
-  {\setlength{\fboxsep}{5pt}%
-   \colorbox{weknowazure}{\textcolor{white}{\large\bfseries #1}}}}{[#1]}}
+% Role badges -- white on solid Azure, in two sizes.
+%   \role     for the section heading (set \LARGE, so the badge sits at
+%             \normalsize and reads as a tag, not a second title)
+%   \roletoc  for the table of contents (set \normalsize, so the badge
+%             drops to \scriptsize)
+% Do not call these directly in a heading -- use \wksection or
+% \wkrolesection below, which pick the right size per context.
+% Robust: these are written to the .toc file, so they must not expand there.
+% #1 size, #2 padding, #3 baseline raise, #4 text
+\DeclareRobustCommand{\wkbadge}[4]{%
+  {\setlength{\fboxsep}{#2}%
+   \raisebox{#3}{%
+     \colorbox{weknowazure}{\textcolor{white}{#1\bfseries #4}}}}}
+\DeclareRobustCommand{\role}[1]{\texorpdfstring{%
+  \hspace{0.45em}\wkbadge{\normalsize}{3.5pt}{-0.35ex}{#1}}{[#1]}}
+\DeclareRobustCommand{\roletoc}[1]{\texorpdfstring{%
+  \hspace{0.35em}\wkbadge{\scriptsize}{2pt}{-0.25ex}{#1}}{[#1]}}
+
+%---------------------------------------------------------------------
+% Section wrappers -- these set the running head and, where a role is
+% given, place the badge at heading size in the body and at the smaller
+% size in the table of contents.
+%   \wksection{Final checklist}
+%   \wkrolesection{Part 2 --- Install and lock the kiosk}{IT}
+%---------------------------------------------------------------------
+\newcommand{\wksection}[1]{%
+  \renewcommand{\wksecmark}{#1}%
+  \section{#1}}
+\newcommand{\wkrolesection}[2]{%
+  \renewcommand{\wksecmark}{#1}%
+  \section[#1 \roletoc{#2}]{#1 \role{#2}}}
 
 %---------------------------------------------------------------------
 % Cover page -- \makewkgcover{title}{subtitle}{audience}

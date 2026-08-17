@@ -106,7 +106,7 @@ honestly be cleared until it is.
 %=====================================================================
 % 1  BEFORE YOU START
 %=====================================================================
-\section{Before you start}
+\wksection{Before you start}
 
 \subsection{Minimum information needed for a location}
 
@@ -161,7 +161,7 @@ Both go into the install command in Part~2 --- do not swap them.
 % 2  CONFIGURATION HIERARCHY
 %=====================================================================
 \clearpage
-\section{How configuration resolves \role{Account Manager}}\label{sec:hierarchy}
+\wkrolesection{How configuration resolves}{Account Manager}\label{sec:hierarchy}
 
 Configuration is layered. An individual kiosk should carry the
 \textbf{minimum configuration needed} --- only the things genuinely unique
@@ -235,8 +235,10 @@ across several properties.\\
 Location &
 The property itself --- hotel name, address, tax entity, banking details.\\
 Kiosk Group &
-A set of kiosks treated the same within a site, e.g.\ all kiosks in one
-terminal.\\
+A set of kiosks that share a specific configuration. \textbf{Not limited
+to one location} --- a kiosk group can span sites, e.g.\ every Uber-only,
+HEx-only or eSIM-only kiosk across the estate. Also used for kiosks
+treated the same within a single site.\\
 \rowcolor{weknowgreyL}
 Kiosk &
 Only what is unique to the single machine.\\
@@ -257,7 +259,7 @@ up what you intended --- and to find the stale override when it is not.
 % 3  PART 1 -- COMMAND CENTRE
 %=====================================================================
 \clearpage
-\section{Part 1 --- Command Centre \role{Account Manager}}
+\wkrolesection{Part 1 --- Command Centre}{Account Manager}
 
 Done from any machine with a browser. You are creating the kiosk record,
 clearing its prep checks, collecting the two credentials IT will need, and
@@ -282,9 +284,17 @@ scheduling the installation.
 \begin{enumerate}\setcounter{enumi}{2}
   \item \emph{Only if required:} create a group from
         \href{https://command.weknow.technology/groups}{Groups}. Groups
-        are either \textbf{location groups} or \textbf{kiosk groups} ---
-        use them to apply shared configuration to several sites or several
-        kiosks at once. Skip this for a single standalone kiosk.
+        apply shared configuration to several sites or several kiosks at
+        once:
+    \begin{itemize}
+      \item \textbf{Location groups} --- sites treated the same, e.g.\ one
+            hotel brand or one operator across several properties.
+      \item \textbf{Kiosk groups} --- kiosks that share a specific
+            configuration. These are \emph{not} limited to a single
+            location: a kiosk group can gather every Uber-only, HEx-only
+            or eSIM-only kiosk across different sites.
+    \end{itemize}
+    Skip this for a single standalone kiosk.
 
   \item Go to \textbf{Kiosks} and select \textbf{Add Kiosk}:
     \begin{itemize}
@@ -396,7 +406,7 @@ record is created, and IT have the Kiosk ID, API key and Workstation ID.
 % 3  PART 2 -- IT
 %=====================================================================
 \clearpage
-\section{Part 2 --- Install and lock the kiosk \role{IT}}
+\wkrolesection{Part 2 --- Install and lock the kiosk}{IT}
 
 You need the Kiosk ID and API key from the Account Manager before you
 start. The machine must already be built per the \emph{Kato Kiosk Setup
@@ -492,7 +502,7 @@ no visible desktop, taskbar or file explorer.
 % 4  FINAL CHECKLIST
 %=====================================================================
 \clearpage
-\section{Final checklist}
+\wksection{Final checklist}
 
 Run through this before leaving site.
 
@@ -523,7 +533,7 @@ desktop.\\
 %=====================================================================
 % 5  TROUBLESHOOTING
 %=====================================================================
-\section{When things go wrong}
+\wksection{When things go wrong}
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
