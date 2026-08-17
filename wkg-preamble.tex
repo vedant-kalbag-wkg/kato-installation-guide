@@ -149,6 +149,27 @@
 \setlist{nosep,itemsep=4pt}
 
 %---------------------------------------------------------------------
+% Page-breaking behaviour
+%   - never strand a single line at the top or bottom of a page
+%   - \wkneed{N\baselineskip} makes a page break attractive when less
+%     than N lines remain, so a heading cannot land at the page foot
+%     with nothing under it (needspace's trick, inlined to avoid a
+%     dependency)
+%---------------------------------------------------------------------
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\makeatletter
+\newcommand{\wkneed}[1]{%
+  \begingroup
+    \setlength{\dimen@}{#1}%
+    \vskip\z@\@plus\dimen@
+    \penalty-100
+    \vskip\z@\@plus-\dimen@
+  \endgroup}
+\makeatother
+
+%---------------------------------------------------------------------
 % Shorthands
 %---------------------------------------------------------------------
 \newcommand{\wpath}[1]{{\ttfamily\small #1}}
@@ -182,9 +203,11 @@
 %---------------------------------------------------------------------
 \newcommand{\wksection}[1]{%
   \renewcommand{\wksecmark}{#1}%
+  \wkneed{6\baselineskip}%
   \section{#1}}
 \newcommand{\wkrolesection}[2]{%
   \renewcommand{\wksecmark}{#1}%
+  \wkneed{6\baselineskip}%
   \section[#1 \roletoc{#2}]{#1 \role{#2}}}
 
 %---------------------------------------------------------------------

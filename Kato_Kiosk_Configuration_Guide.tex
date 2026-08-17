@@ -160,7 +160,6 @@ Both go into the install command in Part~2 --- do not swap them.
 %=====================================================================
 % 2  CONFIGURATION HIERARCHY
 %=====================================================================
-\clearpage
 \wkrolesection{How configuration resolves}{Account Manager}\label{sec:hierarchy}
 
 Configuration is layered. An individual kiosk should carry the
@@ -274,7 +273,6 @@ up what you intended --- and to find the stale override when it is not.
 %=====================================================================
 % 3  PART 1 -- COMMAND CENTRE
 %=====================================================================
-\clearpage
 \wkrolesection{Part 1 --- Command Centre}{Account Manager}
 
 Done from any machine with a browser. You are creating the kiosk record,
@@ -295,7 +293,7 @@ scheduling the installation.
         ID} --- you need it when you create the installation record.
 \end{enumerate}
 
-\screenshot[0.60]{cc-location-id}{The location Overview tab. Use the copy icon next to \textbf{Location ID}.}
+\screenshot[0.50]{cc-location-id}{The location Overview tab. Use the copy icon next to \textbf{Location ID}.}
 
 \begin{enumerate}\setcounter{enumi}{2}
   \item \emph{Only if required:} create a group from
@@ -324,7 +322,7 @@ scheduling the installation.
     Then select \textbf{Create Kiosk}.
 \end{enumerate}
 
-\screenshot[0.50]{cc-add-kiosk}{Add Kiosk. The kiosk is created unassigned --- it is tied to a location by the installation record.}
+\screenshot[0.42]{cc-add-kiosk}{Add Kiosk. The kiosk is created unassigned --- it is tied to a location by the installation record.}
 
 \begin{enumerate}\setcounter{enumi}{4}
   \item The new kiosk appears as \textbf{In Stock}. That is expected ---
@@ -336,7 +334,7 @@ scheduling the installation.
         which one wins a conflict --- see \S\ref{sec:groupsorder}.
 \end{enumerate}
 
-\screenshot[0.42]{cc-group-assignments}{Group assignments on the kiosk Edit tab. Pick a group and select \textbf{Assign}; assigned groups are held in a display order, highest priority first.}
+\screenshot[0.36]{cc-group-assignments}{Group assignments on the kiosk Edit tab. Pick a group and select \textbf{Assign}; assigned groups are held in a display order, highest priority first.}
 
 \subsection{Set the payment credentials}
 
@@ -349,7 +347,7 @@ correct merchant.
 Open the kiosk and go to the \textbf{Edit} tab. Mark the prep checks
 \textbf{Complete} to confirm the kiosk is ready to config and install.
 
-\screenshot[0.86]{cc-prep-checks}{Prep checks on the kiosk Edit tab.}
+\screenshot[0.74]{cc-prep-checks}{Prep checks on the kiosk Edit tab.}
 
 Before clearing them, verify with IT that:
 
@@ -367,7 +365,7 @@ Before clearing them, verify with IT that:
   \item On the kiosk's \textbf{Overview} tab, \textbf{copy the Kiosk ID}.
 \end{enumerate}
 
-\screenshot[0.58]{cc-kiosk-id}{Kiosk Overview --- copy the \textbf{Kiosk ID}.}
+\screenshot[0.48]{cc-kiosk-id}{Kiosk Overview --- copy the \textbf{Kiosk ID}.}
 
 \begin{enumerate}\setcounter{enumi}{1}
   \item Switch to the \textbf{API keys} tab and select \textbf{Generate
@@ -375,7 +373,7 @@ Before clearing them, verify with IT that:
         server.
 \end{enumerate}
 
-\screenshot[0.56]{cc-api-key}{Kiosk API keys. Generate the key here.}
+\screenshot[0.46]{cc-api-key}{Kiosk API keys. Generate the key here.}
 
 \begin{wkwarn}[Copy the API key now]
 The full key is displayed \textbf{only once, at creation}. Paste it
@@ -418,7 +416,7 @@ The installation record ties the kiosk to its location and moves it out of
   \item Select \textbf{Create Installation}.
 \end{enumerate}
 
-\screenshot[0.50]{cc-add-installation}{Add Installation --- links the kiosk to its location and records who is installing it.}
+\screenshot[0.36]{cc-add-installation}{Add Installation --- links the kiosk to its location and records who is installing it.}
 
 \begin{wkinfo}[Done when]
 The kiosk record exists with its prep checks cleared, the installation
@@ -428,7 +426,6 @@ record is created, and IT have the Kiosk ID, API key and Workstation ID.
 %=====================================================================
 % 3  PART 2 -- IT
 %=====================================================================
-\clearpage
 \wkrolesection{Part 2 --- Install and lock the kiosk}{IT}
 
 You need the Kiosk ID and API key from the Account Manager before you
@@ -525,7 +522,6 @@ no visible desktop, taskbar or file explorer.
 %=====================================================================
 % 4  FINAL CHECKLIST
 %=====================================================================
-\clearpage
 \wksection{Final checklist}
 
 Run through this before leaving site.
@@ -669,5 +665,108 @@ If the printer turned out to be on a non-standard port, put it in the
 \textbf{Notes} field of the installation record. It saves the next
 engineer repeating this.
 \end{wkinfo}
+
+%=====================================================================
+% APPENDIX -- ONE-PAGE QUICK REFERENCE
+%=====================================================================
+\clearpage
+\appendix
+\wksection{Quick reference}
+
+One page for someone who has done this before. Work down your column;
+the full detail is in the sections above.
+
+\begin{center}
+\begin{minipage}[t]{0.475\textwidth}
+\colorbox{weknowsky}{\parbox{\dimexpr\textwidth-2\fboxsep}{%
+  \vspace{2pt}\centering\bfseries\color{weknownight}
+  Part 1 --- Account Manager\vspace{2pt}}}
+\vspace{4pt}
+\footnotesize
+\begin{enumerate}[leftmargin=6mm,itemsep=3pt]
+  \item \emptybox\ Collect the location information (\S1.1). Skip RPS
+        customer code and outlet code --- legacy.
+  \item \emptybox\ Create the location; copy the \textbf{Location ID}.
+  \item \emptybox\ Create groups if needed. Kiosk groups can span sites.
+  \item \emptybox\ \textbf{Add Kiosk} --- name, serial, hardware model,
+        firmware.
+  \item \emptybox\ Assign kiosk groups on the \textbf{Edit} tab.
+        Top of the list wins a conflict.
+  \item \emptybox\ Set the \textbf{Store ID} and \textbf{Terminal ID}.
+  \item \emptybox\ Clear the prep checks --- only after IT confirm
+        hardware and FreedomPay.
+  \item \emptybox\ Copy the \textbf{Kiosk ID} (Overview tab).
+  \item \emptybox\ Generate the \textbf{API key} --- shown once. Copy it
+        now.
+  \item \emptybox\ Send the four values to IT (below).
+  \item \emptybox\ Create the \textbf{installation record}.
+\end{enumerate}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.475\textwidth}
+\colorbox{weknowgreyL}{\parbox{\dimexpr\textwidth-2\fboxsep}{%
+  \vspace{2pt}\centering\bfseries\color{weknownight}
+  Part 2 --- IT\vspace{2pt}}}
+\vspace{4pt}
+\footnotesize
+\begin{enumerate}[leftmargin=6mm,itemsep=3pt]
+  \item \emptybox\ Confirm the machine is built --- see the
+        \emph{Kato Kiosk Setup Guide}.
+  \item \emptybox\ Sign in to Windows as \wpath{SelfBooker}.
+  \item \emptybox\ Run the silent install (command below).
+  \item \emptybox\ Check \wpath{kiosk-identity.json} --- Kiosk ID,
+        workstation ID, API key.
+  \item \emptybox\ Sign out; sign in as \wpath{WKGAdmin}.
+  \item \emptybox\ \wpath{SLUtility}: \textbf{Disable User Shell}.
+  \item \emptybox\ Close and reopen \wpath{SLUtility}. Do not skip.
+  \item \emptybox\ Select \wpath{SelfBooker}, set the shell path,
+        keep Action 3.
+  \item \emptybox\ \textbf{Set User Shell}, then \textbf{Enable Shell
+        Launcher}.
+  \item \emptybox\ Sign in as \wpath{SelfBooker}; reboot and confirm the
+        app comes back.
+  \item \emptybox\ Test print, test scan, test payment.
+\end{enumerate}
+\end{minipage}
+\end{center}
+
+\vspace{6pt}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}\footnotesize
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{AM hands IT} &
+\color{white}\textbf{What it is}\\
+Kiosk ID & UUID from the kiosk Overview tab.\\
+\rowcolor{weknowgreyL}
+API key & Generated on the API keys tab. Shown once.\\
+Workstation ID & The machine label, \wpath{WKG-POS-XXX}.\\
+\rowcolor{weknowgreyL}
+Printer COM port & \wpath{COM8} unless the site differs.\\
+\end{tabularx}
+\end{center}
+
+\vspace{4pt}
+\noindent\textbf{\footnotesize Silent install} --- PowerShell, as
+\wpath{SelfBooker}:
+
+\begin{lstlisting}
+& ".\Kiosk Setup 1.0.0.exe" /S /KIOSKID={KIOSK_ID} /WORKSTATIONID={WKG-POS-XXX} /APIKEY={API_KEY} /PRINTER=COM8
+\end{lstlisting}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}\footnotesize
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Path} &
+\color{white}\textbf{Where}\\
+Kato app &
+\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash AppData\textbackslash Local\textbackslash Programs\textbackslash Kiosk\textbackslash Kiosk.exe}\\
+\rowcolor{weknowgreyL}
+Shell Launcher utility &
+\wpath{C:\textbackslash Kiosk\textbackslash SSM25\_files\textbackslash Shell-Launcher-Utilities\textbackslash SLUtility.exe}\\
+Find the printer port &
+List with \wpath{mode}, then \wpath{DIR > COM3} from Command Prompt.
+Fix in \wpath{kiosk-identity.json} --- no reinstall.\\
+\end{tabularx}
+\end{center}
 
 \end{document}
