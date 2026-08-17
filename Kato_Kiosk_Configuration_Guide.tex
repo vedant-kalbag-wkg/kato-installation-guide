@@ -467,7 +467,8 @@ runs as.
 \rowcolor{weknowgreyL}
 \wpath{/APIKEY} & The API key from the Account Manager.\\
 \wpath{/PRINTER} & The printer's COM port. \wpath{COM8} on a standard
-build --- confirm in Device Manager if printing fails.\\
+build. If nothing prints, the port is wrong --- see
+\S\ref{sec:comport}.\\
 \end{tabularx}
 \end{center}
 
@@ -578,8 +579,9 @@ be the last character on each line. Retype the command rather than
 pasting it from a chat client.\\
 \rowcolor{weknowgreyL}
 Printer does nothing &
-\wpath{/PRINTER} was set to the wrong COM port. Confirm the port in Device
-Manager and reinstall with the correct value.\\
+The configured COM port is wrong. Find the port the printer is actually
+on and correct it in \wpath{kiosk-identity.json} --- no reinstall needed
+(\S\ref{sec:comport}).\\
 Prep checks will not clear &
 They are marked manually on the kiosk \textbf{Edit} tab --- they do not
 clear themselves when the underlying condition is met.\\
@@ -589,5 +591,83 @@ That is a machine-build issue, not a configuration one. See the
 \emph{Kato Kiosk Setup Guide}.\\
 \end{tabularx}
 \end{center}
+
+\subsection{Finding the printer's COM port}\label{sec:comport}
+
+\begin{wkwarn}[Device Manager is not the answer here]
+The app writes \textbf{straight to the COM port} --- there is no printer
+driver in between. The port the printer actually answers on does
+\emph{not} always match what Device Manager shows against it, so read the
+ports, then test them.
+\end{wkwarn}
+
+\paragraph{1. List the ports Windows can see.} In PowerShell:
+
+\begin{lstlisting}
+# Just the port names
+[System.IO.Ports.SerialPort]::GetPortNames()
+
+# ...with the device name against each, which narrows the field
+Get-CimInstance Win32_PnPEntity |
+  Where-Object { $_.Name -match 'COM\d+' } |
+  Select-Object Name, DeviceID
+\end{lstlisting}
+
+Or, from Command Prompt, \wpath{mode} lists every COM device with its
+current settings:
+
+\begin{lstlisting}
+mode
+\end{lstlisting}
+
+\paragraph{2. Test each port until the printer reacts.} Writing anything
+to the right port makes the printer spit out a few lines of nonsense ---
+that is the confirmation. Run this from \textbf{Command Prompt}, one port
+at a time, working through the list from step 1:
+
+\begin{lstlisting}
+DIR > COM3
+DIR > COM4
+DIR > COM8
+\end{lstlisting}
+
+From PowerShell, hand the redirect to \wpath{cmd} instead, so it reaches
+the device rather than creating a file:
+
+\begin{lstlisting}
+cmd /c "DIR > COM8"
+\end{lstlisting}
+
+How to read the result:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{54mm} X}
+\rowcolor{weknownight}\color{white}\textbf{What happens} &
+\color{white}\textbf{Means}\\
+Printer prints garbage &
+That is the port. Note it and move to step 3.\\
+\rowcolor{weknowgreyL}
+Command returns silently, nothing prints &
+The port exists but the printer is not on it. Try the next one.\\
+\emph{Access is denied} &
+Something already holds the port --- usually the kiosk app. Close it and
+try again.\\
+\rowcolor{weknowgreyL}
+\emph{The system cannot find the path specified} &
+No such port. Try the next one.\\
+\end{tabularx}
+\end{center}
+
+\paragraph{3. Set the port in \wpath{kiosk-identity.json}.} There is
+\textbf{no need to rerun the silent install}. Open
+\wpath{kiosk-identity.json}, set the printer port to the one you
+confirmed, save, then restart the app and print a test receipt.
+
+\begin{wkinfo}[Note it on the installation record]
+If the printer turned out to be on a non-standard port, put it in the
+\textbf{Notes} field of the installation record. It saves the next
+engineer repeating this.
+\end{wkinfo}
 
 \end{document}
