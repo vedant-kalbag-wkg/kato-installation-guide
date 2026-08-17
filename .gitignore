@@ -1,0 +1,25 @@
+# LaTeX build artefacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# Local test builds
+_testbuild.*
+
+# Compiled output — regenerate from source
+*.pdf
+
+# macOS
+.DS_Store
