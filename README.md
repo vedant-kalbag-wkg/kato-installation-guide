@@ -29,10 +29,9 @@ manual installation required.
 
 ## Sources
 
-Content is drawn from the internal Obsidian notes *Installation Guide* and
-*Configuration Guide*, with FreedomPay detail cross-checked against the
-certified **FreedomPay Windows FCC — Auth & Capture Integration Guide**
-(CER-3425).
+The internal Obsidian notes **Installation Guide** and **Configuration Guide**
+are the sole sources of truth for these documents. Do not reintroduce content
+from the FreedomPay certification guide — it is outdated.
 
 ## Assets
 
@@ -45,7 +44,6 @@ certified **FreedomPay Windows FCC — Auth & Capture Integration Guide**
 
 ## Branding
 
-Follows the *We Know Group Brand Guidelines V2 2023* and mirrors the FCC
-certification guide so the documents read as a set: Azure `#00A6D3` hero
+Follows the *We Know Group Brand Guidelines V2 2023*: Azure `#00A6D3` hero
 colour, Graphite `#121212`, Night Blue `#0C2752`, and the Inter typeface as the
 licensed stand-in for Circular Pro.
