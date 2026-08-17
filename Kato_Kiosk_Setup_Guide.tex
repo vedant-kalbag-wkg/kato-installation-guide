@@ -1,0 +1,296 @@
+%=====================================================================
+%  We Know Group | Kato Kiosk Setup Guide  (IT)
+%  Building the machine: FreedomPay FCC, PAL packages, verification.
+%  Shared styling lives in wkg-preamble.tex.
+%=====================================================================
+\documentclass[a4paper,10pt]{article}
+\input{wkg-preamble}
+\renewcommand{\guidetitle}{Kato Kiosk Setup Guide --- IT}
+
+\begin{document}
+
+\makewkgcover{Kato Kiosk Setup Guide}
+             {Building the machine --- FreedomPay FCC, PAL packages and verification}
+             {IT}
+
+%=====================================================================
+% HOW TO USE
+%=====================================================================
+\section*{How to use this guide}
+\markright{How to use this guide}
+
+This guide covers \textbf{building a kiosk machine}: installing FreedomPay
+Freeway Commerce Connect (FCC), applying the WeKnow configuration and PAL
+packages, and proving the card terminal works. It is done \textbf{once per
+machine}, by IT, before the kiosk is configured for a site.
+
+Once this guide is finished, the machine is ready to be configured and
+deployed --- see the companion \emph{Kato Kiosk Configuration Guide}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  chip/.style={draw=weknowazure,fill=white,rounded corners=3pt,
+               minimum width=30mm,minimum height=13mm,align=center,
+               inner sep=2pt,font=\scriptsize},
+  done/.style={draw=weknowgreyM,fill=weknowgreyL,rounded corners=3pt,
+               minimum width=30mm,minimum height=13mm,align=center,
+               inner sep=2pt,font=\scriptsize,text=weknowgreyN},
+  arr/.style={-{Stealth[length=2.2mm]},thick,weknowazure},
+  node distance=5mm]
+
+  \node[chip] (s1) {\textbf{1}\\Install FCC};
+  \node[chip,right=of s1] (s2) {\textbf{2}\\Apply config\\+ PAL packages};
+  \node[chip,right=of s2] (s3) {\textbf{3}\\Verify};
+  \node[done,right=of s3] (s4) {Configuration\\Guide};
+
+  \draw[arr] (s1) -- (s2);
+  \draw[arr] (s2) -- (s3);
+  \draw[arr,weknowgreyM] (s3) -- (s4);
+\end{tikzpicture}
+\caption{Three steps to a payment-ready machine. The kiosk is then configured for its site in the companion guide.}
+\end{figure}
+
+\begin{wkinfo}[Full FreedomPay reference]
+This is the short version for a standard UK kiosk build. The complete
+FreedomPay installation, regional configuration, UAT / Production
+switching and Level~1 troubleshooting are covered in the certified
+\emph{FreedomPay Windows FCC --- Auth \& Capture Integration Guide}
+(CER-3425).
+\end{wkinfo}
+
+\tableofcontents
+\clearpage
+
+%=====================================================================
+% 1  BEFORE YOU START
+%=====================================================================
+\section{Before you start}
+
+Do everything in this guide signed in as \wpath{WKGAdmin}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{44mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Item} &
+\color{white}\textbf{Where it comes from}\\
+FCC installer &
+Internal mirror: \wpath{https://dev.weknowlondon.uk/SSM/freedompay/}\\
+\rowcolor{weknowgreyL}
+UK config + PAL bundle &
+Same mirror. Kept in step with FreedomPay update notifications.\\
+Store ID \& Terminal ID &
+FreedomPay boarding team, per property.\\
+\rowcolor{weknowgreyL}
+PDQ (card terminal) &
+On the bench, with its USB cable. Note the serial number.\\
+Kiosk peripherals &
+Printer, scanners and sensors connected, so they can be verified at the
+same time.\\
+\end{tabularx}
+\end{center}
+
+\begin{wkwarn}[\wpath{ProgramData} is hidden]
+Windows hides \wpath{ProgramData} by default. Paste paths straight into
+the File Explorer address bar rather than browsing to them.
+\end{wkwarn}
+
+%=====================================================================
+% 2  INSTALL FCC
+%=====================================================================
+\section{Install FreedomPay FCC}
+
+Skip to \S\ref{sec:verify} if FCC is already installed on this machine and
+you only need to confirm it is healthy.
+
+\begin{enumerate}
+  \item Connect the PDQ terminal to the workstation with the supplied USB
+        cable.
+
+  \item Right-click \wpath{FreewayCommerceConnect.exe} and choose
+        \textbf{Run as administrator}.
+
+  \item The \textbf{Remote Update Service (RUS)} wizard runs first ---
+        \textbf{skip the activation step}. The UK build takes its
+        configuration from the config/PAL bundle rather than an
+        activation key.
+
+  \item Choose a \textbf{Custom} installation and tick only the features
+        shown below. In particular, leave \emph{FCC Client User
+        Interface} unticked so no payment status window can appear over
+        the kiosk app.
+\end{enumerate}
+
+\screenshot[0.50]{fcc-custom-features}{Custom Setup feature tree --- \textbf{Freeway POI Drivers} and \textbf{Freeway Server Service} ticked, everything else left clear.}
+
+\begin{enumerate}\setcounter{enumi}{4}
+  \item Finish the installer. The FCC Server Service and FCC Client
+        Service are installed and started.
+\end{enumerate}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{30mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Purpose} &
+\color{white}\textbf{Path}\\
+Binaries \& config &
+\wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect}\\
+\rowcolor{weknowgreyL}
+Logs &
+\wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash log}\\
+PAL packages &
+\wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash pal}\\
+\end{tabularx}
+\end{center}
+
+%=====================================================================
+% 3  CONFIG + PAL
+%=====================================================================
+\section{Apply the WeKnow configuration and PAL packages}
+
+\subsection{The standard UK build}
+
+\begin{enumerate}
+  \item Open the Registry Editor and \textbf{delete} the key\\
+        \wpath{HKEY\_LOCAL\_MACHINE\textbackslash SOFTWARE\textbackslash Freedompay\textbackslash Atlas\textbackslash PAL}\\
+        Do this \emph{before} copying the bundle in --- a stale key stops
+        the new packages being pushed to the terminal.
+
+  \item Copy the UK \wpath{config} and \wpath{PAL} folders from the mirror
+        into\\
+        \wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect}
+
+  \item Restart the services in this order:
+        \textbf{remote $\rightarrow$ server $\rightarrow$ client}.
+\end{enumerate}
+
+\subsection{Pushing additional or updated PAL packages}
+
+Lane 3000 / Lane 3600 terminals periodically need firmware or
+configuration updates to meet new card-brand mandates. Packages come from
+the same internal mirror.
+
+\begin{enumerate}
+  \item Copy the \wpath{.palpkg} files into\\
+        \wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash pal}
+
+  \item Edit \wpath{profile.dat} in that folder so it lists exactly the
+        packages to apply, for example:
+\end{enumerate}
+
+\begin{lstlisting}
+firmware.{devtype}
+baseconfig.{devtype}
+\end{lstlisting}
+
+\begin{enumerate}\setcounter{enumi}{2}
+  \item Save \wpath{profile.dat}. PAL checks for work every
+        \wpath{palCheckInterval} minutes (default 5), and always on
+        service start-up or when a new device is detected.
+
+  \item To force a push now, restart the Freeway Client Service --- or
+        reset the terminal by holding \textbf{\#} and the \textbf{yellow}
+        button together until it restarts.
+
+  \item Watch the terminal. \wpath{firmware.ogz} or \wpath{config.tgz} on
+        screen means a package is transferring. It may reboot more than
+        once; leave it connected until activity stops and it sits on
+        \emph{secured by freedompay} for about a minute.
+\end{enumerate}
+
+\begin{wkwarn}[Do not interrupt a push]
+Unplugging the terminal or the USB cable part-way through a firmware
+write can leave the device in a state only FreedomPay can recover. Wait
+for it to settle.
+\end{wkwarn}
+
+\subsection{Store ID and Terminal ID}
+
+Set the property's \textbf{Store ID} and \textbf{Terminal ID} in the
+configuration so requests are signed for the correct merchant. Restart
+both Freeway services afterwards --- configuration changes do nothing
+until you do.
+
+%=====================================================================
+% 4  VERIFY
+%=====================================================================
+\clearpage
+\section{Verify the build}\label{sec:verify}
+
+Do not hand the machine on until all four checks below pass.
+
+\begin{enumerate}
+  \item In the Windows Services app, confirm both
+        \wpath{FreewayServerService} and \wpath{FreewayClientService}
+        show \textbf{Running}.
+
+  \item Open the newest log file in\\
+        \wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash log}\\
+        and confirm a \textbf{Lane Open} entry at the current timestamp.
+        This is the terminal reporting itself ready.
+
+  \item In the same log, confirm the regional configuration package
+        reached the device --- look for \emph{Successfully pushed}.
+\end{enumerate}
+
+\screenshot[0.94]{fcc-log-palpush}{\emph{Successfully pushed} --- the regional config package reached the terminal.}
+
+\begin{enumerate}\setcounter{enumi}{3}
+  \item Confirm the terminal accepted and wrote it --- look for a
+        \textbf{PalWriteSucceeded} event.
+\end{enumerate}
+
+\screenshot[0.94]{fcc-log-palwrite}{\emph{PalWriteSucceeded} --- the terminal accepted and wrote the package.}
+
+\begin{enumerate}\setcounter{enumi}{4}
+  \item While you have the machine, check the other peripherals: printer
+        prints, scanner scans, sensors respond. It is far cheaper to fix
+        these on the bench than on site.
+\end{enumerate}
+
+\begin{wkinfo}[Done when]
+Both services are running, and the log shows \textbf{Lane Open}, a
+successful package push and a \textbf{PalWriteSucceeded} at today's date.
+The machine is now ready for the \emph{Kato Kiosk Configuration Guide}.
+\end{wkinfo}
+
+%=====================================================================
+% 5  TROUBLESHOOTING
+%=====================================================================
+\section{When things go wrong}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{50mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Symptom} &
+\color{white}\textbf{First thing to try}\\
+No \emph{Lane Open} in the log &
+The terminal is not being detected. Check the USB cable, restart the
+Freeway Client Service, then power-cycle the terminal.\\
+\rowcolor{weknowgreyL}
+PAL package never pushes &
+Confirm the \wpath{Atlas\textbackslash PAL} registry key was deleted
+\emph{before} the config/PAL folders were copied in, then restart the
+services in order (remote $\rightarrow$ server $\rightarrow$ client).\\
+Push starts but never completes &
+Leave it --- reboots are normal. If it is still cycling after several
+minutes, reset the terminal (\textbf{\#} + \textbf{yellow}) and let it
+retry.\\
+\rowcolor{weknowgreyL}
+Services will not stay running &
+Check the log for a configuration parse error. A partially copied bundle
+is the usual cause --- recopy it and restart in order.\\
+Payments fail with a credentials error &
+Store ID / Terminal ID wrong, or the configuration is pointing at the
+wrong environment. See the FCC integration guide (CER-3425).\\
+\end{tabularx}
+\end{center}
+
+\begin{wkinfo}[Still stuck?]
+Zip the whole \wpath{log} folder from
+\wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect},
+note the workstation serial and the terminal serial, and raise it with
+WeKnow Integration Support before changing anything else.
+\end{wkinfo}
+
+\end{document}

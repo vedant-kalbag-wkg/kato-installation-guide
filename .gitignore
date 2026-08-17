@@ -23,3 +23,7 @@ _testbuild.*
 
 # macOS
 .DS_Store
+
+# Local compile tests
+_t_*
+_testpre*

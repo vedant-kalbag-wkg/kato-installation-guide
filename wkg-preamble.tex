@@ -1,0 +1,209 @@
+%=====================================================================
+%  We Know Group | Shared preamble for the Kato kiosk guides
+%
+%  Branding per "We Know Group Brand Guidelines V2 2023":
+%    - Primary colours: Graphite #121212, Azure #00A6D3, White
+%    - Secondary: Sky Blue #E5F1F9, Sea Blue #008BB2, Night Blue #0C2752
+%    - Greys: Night #575A5C, Mid #ADADAD, Light #F4F4F4
+%    - Typeface: Circular Pro (approximated here with Inter, the licensed
+%      brand stand-in used in the WeKnow Employee Handbook)
+%    - Logos are the official WeKnow assets in images/ -- never redrawn.
+%
+%  Style mirrors the certified "FreedomPay Windows FCC -- Auth & Capture"
+%  integration guide (CER-3425) so the documents read as a set.
+%
+%  Usage, from a document that has already declared \documentclass:
+%      \input{wkg-preamble}
+%      \renewcommand{\guidetitle}{Short title for the page footer}
+%=====================================================================
+
+%---------------------------------------------------------------------
+% Fonts & encoding -- Inter (brand stand-in for Circular Pro)
+%---------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[sfdefault]{inter}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{microtype}
+
+%---------------------------------------------------------------------
+% Layout
+%---------------------------------------------------------------------
+\usepackage[a4paper,margin=20mm,top=28mm,bottom=22mm,headheight=20pt,headsep=14pt]{geometry}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.misc,fit,backgrounds}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{lastpage}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage[hidelinks,colorlinks=true,urlcolor=weknowsea,linkcolor=weknownight]{hyperref}
+
+%---------------------------------------------------------------------
+% We Know Group palette (Brand Guidelines V2 2023, Section 3)
+%---------------------------------------------------------------------
+\definecolor{weknowazure}{HTML}{00A6D3}     % Hero colour
+\definecolor{weknowgraphite}{HTML}{121212}
+\definecolor{weknowsky}{HTML}{E5F1F9}
+\definecolor{weknowsea}{HTML}{008BB2}
+\definecolor{weknownight}{HTML}{0C2752}
+\definecolor{weknowgreyN}{HTML}{575A5C}
+\definecolor{weknowgreyM}{HTML}{ADADAD}
+\definecolor{weknowgreyL}{HTML}{F4F4F4}
+\definecolor{weknowazure80}{HTML}{33B8DC}    % Azure tints (brand: tint Azure only)
+\definecolor{weknowazure60}{HTML}{66CAE5}
+\definecolor{weknowazure40}{HTML}{99DBED}
+\definecolor{weknowazure20}{HTML}{CCEDF6}
+
+%---------------------------------------------------------------------
+% Headers / footers -- \guidetitle is set by each document
+%---------------------------------------------------------------------
+\providecommand{\guidetitle}{Kato Kiosk Guide}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{weknowgreyN}\nouppercase{\leftmark}}
+\fancyhead[R]{\raisebox{-0.35\height}{\includegraphics[height=15pt]{wkg-logo-horizontal}}}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{weknowazure}\leaders\hrule height \headrulewidth\hfill}}
+\fancyfoot[L]{\scriptsize\color{weknowgreyN}Internal --- We Know Group}
+\fancyfoot[C]{\scriptsize\color{weknowgreyN}\guidetitle}
+\fancyfoot[R]{\scriptsize\color{weknowgreyN}Page \thepage\ of \pageref{LastPage}}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{weknowgreyM}\leaders\hrule height \footrulewidth\hfill}}
+
+%---------------------------------------------------------------------
+% Section styling
+%---------------------------------------------------------------------
+\titleformat{\section}
+  {\color{weknowgraphite}\LARGE\bfseries}
+  {\color{weknowazure}\thesection}{0.7em}{}
+  [{\vspace{3pt}\color{weknowazure}\titlerule[1.4pt]}]
+\titleformat{\subsection}
+  {\color{weknowsea}\Large\bfseries}
+  {\color{weknowazure}\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{20pt}{12pt}
+\titlespacing*{\subsection}{0pt}{16pt}{6pt}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\quad #1}}
+
+%---------------------------------------------------------------------
+% Captions
+%---------------------------------------------------------------------
+\captionsetup{font=small,labelfont={bf,color=weknownight},
+              textfont={color=weknowgreyN},skip=5pt}
+
+%---------------------------------------------------------------------
+% Screenshot helper -- \screenshot[width fraction]{file}{caption}
+%---------------------------------------------------------------------
+\newcommand{\screenshot}[3][0.72]{%
+  \begin{figure}[H]
+    \centering
+    \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.6pt}%
+    {\color{weknowgreyM}\fbox{\includegraphics[width=#1\linewidth]{#2}}}%
+    \caption{#3}
+  \end{figure}}
+
+%---------------------------------------------------------------------
+% Callout boxes
+%---------------------------------------------------------------------
+\newtcolorbox{wkinfo}[1][]{%
+  enhanced,breakable,colback=weknowsky,colframe=weknowazure,
+  boxrule=0pt,leftrule=2.5pt,arc=1.5pt,
+  fonttitle=\bfseries,coltitle=weknownight,title={#1},
+  left=6pt,right=6pt,top=5pt,bottom=5pt}
+\newtcolorbox{wkwarn}[1][]{%
+  enhanced,breakable,colback=weknowgreyL,colframe=weknownight,
+  boxrule=0pt,leftrule=2.5pt,arc=1.5pt,
+  fonttitle=\bfseries,coltitle=weknownight,title={#1},
+  left=6pt,right=6pt,top=5pt,bottom=5pt}
+
+%---------------------------------------------------------------------
+% Code listings
+%---------------------------------------------------------------------
+\lstdefinestyle{wkcode}{
+  basicstyle=\ttfamily\footnotesize\color{weknowgraphite},
+  backgroundcolor=\color{weknowgreyL},
+  frame=single, framerule=0pt, rulecolor=\color{weknowgreyL},
+  breaklines=true, breakatwhitespace=false,
+  columns=fullflexible, keepspaces=true,
+  aboveskip=8pt, belowskip=8pt, xleftmargin=6pt, framexleftmargin=6pt}
+\lstset{style=wkcode}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlist{nosep,itemsep=4pt}
+
+%---------------------------------------------------------------------
+% Shorthands
+%---------------------------------------------------------------------
+\newcommand{\wpath}[1]{{\ttfamily\small #1}}
+\newcommand{\tick}{{\color{weknowsea}$\checkmark$}}
+\newcommand{\emptybox}{{\color{weknowgreyM}$\square$}}
+
+% Role badge for section headings, e.g. \role{AM}
+\newcommand{\role}[1]{\texorpdfstring{%
+  {\colorbox{weknowazure20}{\textcolor{weknownight}{\footnotesize\bfseries #1}}}}{[#1]}}
+
+%---------------------------------------------------------------------
+% Cover page -- \makewkgcover{title}{subtitle}{audience}
+%---------------------------------------------------------------------
+\newcommand{\makewkgcover}[3]{%
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  % --- 'Wink' echo: symmetric Azure-tint rounded squares framing the top ---
+  \fill[weknowazure20,rounded corners=8mm]
+       ([xshift=-46mm,yshift=-46mm]current page.north east) rectangle
+       ([xshift=14mm,yshift=-8mm]current page.north east);
+  \fill[weknowazure40,rounded corners=5mm]
+       ([xshift=-30mm,yshift=-40mm]current page.north east) rectangle
+       ([xshift=8mm,yshift=-13mm]current page.north east);
+  \fill[weknowazure20,rounded corners=8mm]
+       ([xshift=-14mm,yshift=-46mm]current page.north west) rectangle
+       ([xshift=46mm,yshift=-8mm]current page.north west);
+  \fill[weknowazure40,rounded corners=5mm]
+       ([xshift=-8mm,yshift=-40mm]current page.north west) rectangle
+       ([xshift=30mm,yshift=-13mm]current page.north west);
+
+  % --- Large centred WeKnow logo (stacked variant) = the hero ---
+  \node[anchor=north] at ([yshift=-50mm]current page.north)
+       {\includegraphics[width=52mm]{wkg-logo-stacked}};
+
+  % --- Centred title / Azure hero rule / subtitle ---
+  \node[anchor=north,align=center,text width=185mm]
+       at ([yshift=-126mm]current page.north)
+       {{\color{weknowgraphite}\fontsize{26}{31}\selectfont\bfseries #1}\\[11pt]
+        {\color{weknowazure}\rule{42mm}{2pt}}\\[11pt]
+        {\color{weknowsea}\fontsize{15}{19}\selectfont #2}};
+
+  % --- Metadata panel ---
+  \node[anchor=north, fill=weknowsky, rounded corners=3mm,
+        inner xsep=12mm, inner ysep=8mm]
+       at ([yshift=-178mm]current page.north)
+       {\renewcommand{\arraystretch}{1.5}%
+        \begin{tabular}{@{}l@{\hspace{12mm}}l@{}}
+          {\color{weknowsea}\bfseries Version} & {\color{weknowgraphite}1.0}\\
+          {\color{weknowsea}\bfseries Date} & {\color{weknowgraphite}August 2026}\\
+          {\color{weknowsea}\bfseries Classification} & {\color{weknowgraphite}Internal}\\
+          {\color{weknowsea}\bfseries Prepared by} & {\color{weknowgraphite}We Know Group --- Integrations}\\
+          {\color{weknowsea}\bfseries For} & {\color{weknowgraphite}#3}\\
+        \end{tabular}};
+
+  % --- Confidentiality notice ---
+  \node[anchor=south,align=center,text width=150mm]
+       at ([yshift=20mm]current page.south)
+       {{\color{weknowgreyM}\rule{55mm}{0.4pt}}\\[8pt]
+        {\color{weknowgreyN}\footnotesize This document contains confidential and proprietary
+         information belonging to We Know Group. It is intended solely for internal use and may
+         not be reproduced or distributed without prior written consent.}};
+\end{tikzpicture}
+\end{titlepage}}

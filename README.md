@@ -1,24 +1,31 @@
-# Kato Kiosk Installation Guide
+# Kato Kiosk Guides
 
-Internal step-by-step guide for creating, configuring and installing a Kato
-kiosk — from the Command Centre record through FreedomPay FCC, the Kato app,
-kiosk lockdown and the installation record.
+Two internal step-by-step guides, split by who does the work.
 
-Written for field installers and operations. Six stages, each with a
-*Done when* gate, plus a final checklist and a troubleshooting table.
+| Document | Audience | Covers |
+|---|---|---|
+| `Kato_Kiosk_Setup_Guide.tex` | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Done once per machine. |
+| `Kato_Kiosk_Configuration_Guide.tex` | Account Managers & IT | Configuring a kiosk for an installation: Command Centre record and credentials (AM), then silent app install and kiosk lockdown (IT). |
+
+The setup guide comes first — a machine must be built and verified before
+its prep checks can be cleared in the configuration guide.
 
 ## Build
 
 Authored for **Overleaf** (or any full TeX Live install).
 
-- **Main document:** `Kato_Kiosk_Installation_Guide.tex`
 - **Compiler:** pdfLaTeX
 - **Format:** A4
+- **Shared styling:** `wkg-preamble.tex` — both documents `\input` it, so
+  branding changes are made in one place.
 
-On Overleaf, set the main document above and the compiler to *pdfLaTeX* in
-*Menu → Settings*. All packages used (`inter`, `tcolorbox`, `tikz`, `listings`,
-`tabularx`, `lastpage`, …) ship with the standard Overleaf TeX Live
-distribution — no manual installation required.
+Each `.tex` produces its own PDF. On Overleaf, right-click a file and choose
+**Set as main document** to compile that guide, then switch to build the other.
+Set the compiler to *pdfLaTeX* in *Menu → Settings*.
+
+All packages used (`inter`, `tcolorbox`, `tikz`, `listings`, `tabularx`,
+`lastpage`, …) ship with the standard Overleaf TeX Live distribution — no
+manual installation required.
 
 ## Sources
 
@@ -39,6 +46,6 @@ certified **FreedomPay Windows FCC — Auth & Capture Integration Guide**
 ## Branding
 
 Follows the *We Know Group Brand Guidelines V2 2023* and mirrors the FCC
-certification guide so the two documents read as a set: Azure `#00A6D3` hero
+certification guide so the documents read as a set: Azure `#00A6D3` hero
 colour, Graphite `#121212`, Night Blue `#0C2752`, and the Inter typeface as the
 licensed stand-in for Circular Pro.

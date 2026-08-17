@@ -1,0 +1,442 @@
+%=====================================================================
+%  We Know Group | Kato Kiosk Configuration Guide  (AM + IT)
+%  Command Centre setup, silent app install, kiosk lockdown.
+%  Shared styling lives in wkg-preamble.tex.
+%=====================================================================
+\documentclass[a4paper,10pt]{article}
+\input{wkg-preamble}
+\renewcommand{\guidetitle}{Kato Kiosk Configuration Guide --- AM \& IT}
+
+\begin{document}
+
+\makewkgcover{Kato Kiosk Configuration Guide}
+             {Configuring a kiosk for installation --- Command Centre, app install and kiosk lockdown}
+             {Account Managers \& IT}
+
+%=====================================================================
+% HOW TO USE
+%=====================================================================
+\section*{How to use this guide}
+\markright{How to use this guide}
+
+This guide covers \textbf{configuring a kiosk for a specific
+installation}. It has two parts, split by who does the work:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{20mm} L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Part} &
+\color{white}\textbf{Who} & \color{white}\textbf{What}\\
+\textbf{Part 1} & Account Manager &
+Create the location, kiosk and installation record in Command Centre,
+clear the prep checks, and hand the Kiosk ID and API key to IT.\\
+\rowcolor{weknowgreyL}
+\textbf{Part 2} & IT &
+Install the Kato app on the machine using those credentials, and lock the
+machine into kiosk mode.\\
+\end{tabularx}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  chip/.style={draw=weknowazure,fill=white,rounded corners=3pt,
+               minimum width=31mm,minimum height=12mm,align=center,
+               inner sep=2pt,font=\scriptsize},
+  lane/.style={font=\footnotesize\bfseries,text=weknowsea,align=center},
+  arr/.style={-{Stealth[length=2.2mm]},thick,weknowazure},
+  handoff/.style={-{Stealth[length=2.2mm]},thick,weknowgreyN,dashed}]
+
+  \node[chip] (a1) at (0,0)    {Create kiosk in\\Command Centre};
+  \node[chip] (a2) at (4.3,0)  {Clear\\prep checks};
+  \node[chip] (a3) at (8.6,0)  {Create installation\\record};
+  \node[chip] (b2) at (4.3,-2.5) {Install the\\Kato app};
+  \node[chip] (b3) at (8.6,-2.5) {Lock into\\kiosk mode};
+
+  \node[lane] at (-2.6,0)    {Part 1\\Account Manager};
+  \node[lane] at (-2.6,-2.5) {Part 2\\IT};
+
+  \draw[arr] (a1) -- (a2);
+  \draw[arr] (a2) -- (a3);
+  \draw[arr] (b2) -- (b3);
+
+  \draw[handoff] (a1.south) -- ++(0,-1.25) -| (b2.north);
+  \node[font=\scriptsize,text=weknowgreyN,fill=white,inner sep=1.5pt]
+       at (2.15,-1.25) {Kiosk ID + API key};
+\end{tikzpicture}
+\caption{The Account Manager creates the record and hands two credentials to IT, who install and lock down the machine.}
+\end{figure}
+
+\begin{wkwarn}[The machine must already be built]
+This guide assumes FreedomPay FCC and the PAL packages are installed and
+verified on the machine. If that has not been done, work through the
+\emph{Kato Kiosk Setup Guide} first --- the prep checks in Part~1 cannot
+honestly be cleared until it is.
+\end{wkwarn}
+
+\begin{wkinfo}[Golden rules]
+\begin{itemize}
+  \item The \textbf{API key is shown once}. Copy it the moment you
+        generate it, or you will have to generate a new one.
+  \item The \textbf{Kiosk ID} and the \textbf{Workstation ID} are
+        different things --- see \S\ref{sec:ids}.
+  \item Do not clear a prep check you have not actually verified. It is
+        the only thing standing between a half-built kiosk and a live
+        one.
+\end{itemize}
+\end{wkinfo}
+
+\tableofcontents
+\clearpage
+
+%=====================================================================
+% 1  BEFORE YOU START
+%=====================================================================
+\section{Before you start}
+
+\subsection{Information the site must provide}
+
+The Account Manager collects these before anything is created in Command
+Centre. If any are missing, chase them first --- the kiosk cannot be
+configured without them.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}\small
+\begin{tabularx}{\textwidth}{X X}
+\rowcolor{weknowgreyL}
+\emptybox\ Request owner & \emptybox\ Default language (kiosk + PDQ)\\
+\emptybox\ Hotel name & \emptybox\ Currency\\
+\rowcolor{weknowgreyL}
+\emptybox\ Hotel address & \emptybox\ Relevant airports\\
+\emptybox\ RPS customer code & \emptybox\ Default Uber suggestions\\
+\rowcolor{weknowgreyL}
+\emptybox\ Outlet code & \emptybox\ Products for the home screen\\
+\emptybox\ Which products to enable & \emptybox\ Timezone\\
+\end{tabularx}
+\end{center}
+
+\subsection{Two identifiers, two different things}\label{sec:ids}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Identifier} &
+\color{white}\textbf{What it is}\\
+\textbf{Kiosk ID} &
+A UUID generated by Command Centre when the kiosk record is created. The
+app uses it to identify itself to the server.\\
+\rowcolor{weknowgreyL}
+\textbf{Workstation ID} &
+The physical machine label, e.g.\ \wpath{WKG-POS-617}. Also entered as the
+kiosk's serial number in Command Centre.\\
+\end{tabularx}
+\end{center}
+
+Both go into the install command in Part~2 --- do not swap them.
+
+%=====================================================================
+% 2  PART 1 -- COMMAND CENTRE
+%=====================================================================
+\clearpage
+\section{Part 1 --- Command Centre \role{Account Manager}}
+
+Done from any machine with a browser. You are creating the kiosk record,
+clearing its prep checks, collecting the two credentials IT will need, and
+scheduling the installation.
+
+\subsection{Create the location and the kiosk}
+
+\begin{enumerate}
+  \item Open \href{https://command.weknow.technology}{Command Centre}
+        and sign in.
+
+  \item Go to \href{https://command.weknow.technology/locations}{Locations}
+        and create the location, working down the hierarchy:
+        \textbf{Country $\rightarrow$ Region $\rightarrow$ City
+        $\rightarrow$ Location}. Open it and \textbf{copy the Location
+        ID} --- you need it when you create the installation record.
+\end{enumerate}
+
+\screenshot[0.60]{cc-location-id}{The location Overview tab. Use the copy icon next to \textbf{Location ID}.}
+
+\begin{enumerate}\setcounter{enumi}{2}
+  \item \emph{Only if required:} create a group from
+        \href{https://command.weknow.technology/groups}{Groups}. Groups
+        are either \textbf{location groups} or \textbf{kiosk groups} ---
+        use them to apply shared configuration to several sites or several
+        kiosks at once. Skip this for a single standalone kiosk.
+
+  \item Go to \textbf{Kiosks} and select \textbf{Add Kiosk}:
+    \begin{itemize}
+      \item \textbf{Name} --- how the kiosk is referred to operationally,
+            e.g.\ \emph{T2/T3 Tunnel - 2}.
+      \item \textbf{Serial number} --- the workstation label,
+            e.g.\ \wpath{WKG-POS-617}.
+      \item \textbf{Hardware model} --- e.g.\ \emph{K10/20}.
+      \item \textbf{Firmware version} --- e.g.\ \emph{1.0.0}.
+    \end{itemize}
+    Then select \textbf{Create Kiosk}.
+\end{enumerate}
+
+\screenshot[0.50]{cc-add-kiosk}{Add Kiosk. The kiosk is created unassigned --- it is tied to a location by the installation record.}
+
+\begin{enumerate}\setcounter{enumi}{4}
+  \item The new kiosk appears as \textbf{In Stock}. That is expected ---
+        it stays In Stock until it is installed.
+\end{enumerate}
+
+\subsection{Clear the prep checks}
+
+Open the kiosk and go to the \textbf{Edit} tab. Verify each item, then
+mark it \textbf{Complete}.
+
+\screenshot[0.86]{cc-prep-checks}{Prep checks on the kiosk Edit tab.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{22mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Check} &
+\color{white}\textbf{Confirm with IT that\dots}\\
+\textbf{Hardware} &
+every peripheral is plugged in and working: printer, PDQ, sensors,
+scanners.\\
+\rowcolor{weknowgreyL}
+\textbf{Firmware} &
+the terminal is on the expected firmware and the PAL push succeeded.\\
+\textbf{Software} &
+FreedomPay is installed and both \wpath{FreewayClientService} and
+\wpath{FreewayServerService} are running.\\
+\end{tabularx}
+\end{center}
+
+\subsection{Collect the credentials for IT}
+
+\begin{enumerate}
+  \item On the kiosk's \textbf{Overview} tab, \textbf{copy the Kiosk ID}.
+\end{enumerate}
+
+\screenshot[0.58]{cc-kiosk-id}{Kiosk Overview --- copy the \textbf{Kiosk ID}.}
+
+\begin{enumerate}\setcounter{enumi}{1}
+  \item Switch to the \textbf{API keys} tab and select \textbf{Generate
+        API key}. This is the key the kiosk uses to authenticate to the
+        server.
+\end{enumerate}
+
+\screenshot[0.56]{cc-api-key}{Kiosk API keys. Generate the key here.}
+
+\begin{wkwarn}[Copy the API key now]
+The full key is displayed \textbf{only once, at creation}. Paste it
+somewhere safe --- your password manager or the install ticket --- until
+the installation is finished. If you lose it, generate a new one; the old
+key cannot be recovered.
+\end{wkwarn}
+
+\begin{wkinfo}[Hand over to IT]
+Send IT four things: the \textbf{Kiosk ID}, the \textbf{API key}, the
+\textbf{Workstation ID} (\wpath{WKG-POS-XXX}), and the printer's COM port
+if it is not the standard \wpath{COM8}. Send the API key by a private
+channel, and delete it from that channel once the install is confirmed
+working.
+\end{wkinfo}
+
+\subsection{Create the installation record}
+
+The installation record ties the kiosk to its location and moves it out of
+\emph{In Stock}.
+
+\begin{enumerate}
+  \item Go to
+        \href{https://command.weknow.technology/installations}{Installations}
+        and select \textbf{Add Installation}.
+
+  \item Complete the form:
+    \begin{itemize}
+      \item \textbf{Kiosk} --- the kiosk you created above.
+      \item \textbf{Location ID} --- the UUID copied earlier.
+      \item \textbf{Planned date} --- the installation date.
+      \item \textbf{Hardware model} and \textbf{Serial number} --- must
+            match the kiosk record.
+      \item \textbf{Installer name}, \textbf{Installer contact} and
+            \textbf{Installation company}.
+      \item \textbf{Notes} --- anything the engineer on site needs to
+            know, e.g.\ \emph{``Install near main entrance''}.
+    \end{itemize}
+
+  \item Select \textbf{Create Installation}.
+\end{enumerate}
+
+\screenshot[0.50]{cc-add-installation}{Add Installation --- links the kiosk to its location and records who is installing it.}
+
+\begin{wkinfo}[Done when]
+The kiosk record exists with its prep checks cleared, the installation
+record is created, and IT have the Kiosk ID, API key and Workstation ID.
+\end{wkinfo}
+
+%=====================================================================
+% 3  PART 2 -- IT
+%=====================================================================
+\clearpage
+\section{Part 2 --- Install and lock the kiosk \role{IT}}
+
+You need the Kiosk ID and API key from the Account Manager before you
+start. The machine must already be built per the \emph{Kato Kiosk Setup
+Guide}.
+
+\subsection{Install the Kato app}
+
+Done \textbf{signed in as \wpath{SelfBooker}} --- the account the kiosk
+runs as.
+
+\begin{enumerate}
+  \item Sign in to Windows as \wpath{SelfBooker}.
+
+  \item Open \textbf{PowerShell} in the folder containing the installer
+        and run the silent install, substituting your four values:
+\end{enumerate}
+
+\begin{lstlisting}
+& ".\Kiosk Setup 1.0.0.exe" /S `
+  /KIOSKID={KIOSK_ID_FROM_COMMAND_CENTRE} `
+  /WORKSTATIONID={WKG-POS-XXX} `
+  /APIKEY={API_KEY_FROM_COMMAND_CENTRE} `
+  /PRINTER=COM8
+\end{lstlisting}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Switch} &
+\color{white}\textbf{Value}\\
+\wpath{/S} & Silent install --- no prompts. Always used.\\
+\rowcolor{weknowgreyL}
+\wpath{/KIOSKID} & The Kiosk ID from the Account Manager.\\
+\wpath{/WORKSTATIONID} & The machine label, e.g.\ \wpath{WKG-POS-617}.\\
+\rowcolor{weknowgreyL}
+\wpath{/APIKEY} & The API key from the Account Manager.\\
+\wpath{/PRINTER} & The printer's COM port. \wpath{COM8} on a standard
+build --- confirm in Device Manager if printing fails.\\
+\end{tabularx}
+\end{center}
+
+\begin{enumerate}\setcounter{enumi}{2}
+  \item Confirm the app wrote its identity file. Open
+        \wpath{kiosk-identity.json} and check the Kiosk ID, workstation ID
+        and API key are present and correct. If the file is missing,
+        create it before continuing --- the app will not connect without
+        it.
+
+  \item Sign out of \wpath{SelfBooker}, then sign in as \wpath{WKGAdmin}
+        for the lockdown below.
+\end{enumerate}
+
+\subsection{Lock the machine into kiosk mode}
+
+The Shell Launcher utility replaces the Windows desktop with the Kato app
+for the \wpath{SelfBooker} account, so the machine boots straight into the
+kiosk and there is no desktop to escape to.
+
+\begin{enumerate}
+  \item Signed in as \wpath{WKGAdmin}, run\\
+        \wpath{C:\textbackslash Kiosk\textbackslash SSM25\_files\textbackslash Shell-Launcher-Utilities\textbackslash SLUtility.exe}
+
+  \item Select \textbf{Disable User Shell}.
+
+  \item \textbf{Close and reopen} \wpath{SLUtility}. It needs the restart
+        to pick up the change --- do not skip this.
+
+  \item Select the \wpath{SelfBooker} user and change the shell path to
+        the app, leaving the default \textbf{Action 3}:\\
+        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash AppData\textbackslash Local\textbackslash Programs\textbackslash Kiosk\textbackslash Kiosk.exe}
+
+  \item Select \textbf{Set User Shell}.
+
+  \item Select \textbf{Enable Shell Launcher}.
+
+  \item Sign out of \wpath{WKGAdmin} and sign in as \wpath{SelfBooker}.
+        The Kato app should launch full screen with no desktop behind it.
+        Reboot once to confirm it comes back the same way.
+\end{enumerate}
+
+\begin{wkwarn}[Order matters]
+Disable $\rightarrow$ restart the utility $\rightarrow$ set the path
+$\rightarrow$ set shell $\rightarrow$ enable. Setting the shell before
+restarting \wpath{SLUtility} is the most common reason a kiosk boots to a
+desktop instead of the app.
+\end{wkwarn}
+
+\begin{wkinfo}[Done when]
+The machine reboots straight into the Kato app as \wpath{SelfBooker}, with
+no visible desktop, taskbar or file explorer.
+\end{wkinfo}
+
+%=====================================================================
+% 4  FINAL CHECKLIST
+%=====================================================================
+\clearpage
+\section{Final checklist}
+
+Run through this before leaving site.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.45}\small
+\begin{tabularx}{\textwidth}{L{8mm} L{14mm} X}
+\rowcolor{weknownight}\color{white} & \color{white}\textbf{Who} &
+\color{white}\textbf{Check}\\
+\emptybox & AM & Kiosk record has the correct name, serial and hardware
+model.\\
+\rowcolor{weknowgreyL}
+\emptybox & AM & All prep checks (hardware, firmware, software) cleared.\\
+\emptybox & AM & Installation record created and linked to the location;
+kiosk no longer \emph{In Stock}.\\
+\rowcolor{weknowgreyL}
+\emptybox & AM & API key deleted from the ticket / chat once the install
+is confirmed working.\\
+\emptybox & IT & \wpath{kiosk-identity.json} present and correct.\\
+\rowcolor{weknowgreyL}
+\emptybox & IT & Machine reboots straight into the Kato app --- no
+desktop.\\
+\emptybox & IT & Printer prints, scanner scans, sensors respond.\\
+\rowcolor{weknowgreyL}
+\emptybox & IT & Test payment taken on the PDQ and refunded.\\
+\end{tabularx}
+\end{center}
+
+%=====================================================================
+% 5  TROUBLESHOOTING
+%=====================================================================
+\section{When things go wrong}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{50mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Symptom} &
+\color{white}\textbf{First thing to try}\\
+Machine boots to the Windows desktop, not the app &
+The \wpath{SLUtility} sequence was not followed. Redo it in order,
+restarting the utility between \emph{Disable User Shell} and setting the
+path.\\
+\rowcolor{weknowgreyL}
+App launches but will not connect &
+Check \wpath{kiosk-identity.json}: wrong Kiosk ID, or an API key that was
+regenerated after the install. Generate a fresh key and reinstall with the
+new value.\\
+Installer runs but nothing appears &
+The switches are case-sensitive and the backtick line continuations must
+be the last character on each line. Retype the command rather than
+pasting it from a chat client.\\
+\rowcolor{weknowgreyL}
+Printer does nothing &
+\wpath{/PRINTER} was set to the wrong COM port. Confirm the port in Device
+Manager and reinstall with the correct value.\\
+Prep checks will not clear &
+They are marked manually on the kiosk \textbf{Edit} tab --- they do not
+clear themselves when the underlying condition is met.\\
+\rowcolor{weknowgreyL}
+Payment fails on the test transaction &
+That is a machine-build issue, not a configuration one. See the
+\emph{Kato Kiosk Setup Guide}.\\
+\end{tabularx}
+\end{center}
+
+\end{document}
