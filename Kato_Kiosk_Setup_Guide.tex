@@ -9,8 +9,8 @@
 
 \begin{document}
 
-\makewkgcover{Kato: Kiosk Setup Guide}
-             {Building the machine \\ FreedomPay FCC install, configuration and verification}
+\makewkgcover{Kato: \\Kiosk Setup Guide}
+             {Building the machine \\ FreedomPay FCC Install \\Configuration and Verification}
              {IT}
 
 %=====================================================================
@@ -123,7 +123,7 @@ Logs &
         \wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect}
 
   \item Restart the services in this order:
-        \textbf{remote $\rightarrow$ server $\rightarrow$ client}.
+        \wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}
 \end{enumerate}
 
 %=====================================================================
@@ -179,9 +179,9 @@ service, then power-cycle the terminal.\\
 No \emph{Successfully pushed} or \emph{PalWriteSucceeded} &
 Confirm the \wpath{Atlas\textbackslash PAL} registry key was deleted
 \emph{before} the config and PAL folders were copied in, then restart the
-services in order (remote $\rightarrow$ server $\rightarrow$ client).\\
+services in order (\wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}).\\
 Services will not stay running &
-A partially copied bundle is the usual cause. Recopy the \wpath{config}
+A partially copied bundle or an unsupported version of FCC is the usual cause. Reinstall a known good version of FCC. Recopy the \wpath{config}
 and \wpath{PAL} folders and restart the services in order.\\
 \end{tabularx}
 \end{center}
