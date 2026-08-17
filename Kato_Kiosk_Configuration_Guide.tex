@@ -207,6 +207,24 @@ harm on day one, but it is the thing that makes later changes miss ---
 you update the Country and the kiosk keeps its own stale override.
 \end{wkinfo}
 
+\subsection{When a kiosk is in more than one group}\label{sec:groupsorder}
+
+A kiosk can belong to \textbf{several kiosk groups at once}. Assign them
+on the kiosk's \textbf{Edit} tab, under \textbf{Group assignments}.
+
+Assigned groups carry a \textbf{display order}, and that order decides
+conflicts: where two of a kiosk's groups set the same parameter, the group
+\textbf{higher in the list wins} and overrides the ones below it.
+
+\begin{wkinfo}[Order the groups deliberately]
+Put the most specific group at the top. A kiosk that is both
+\emph{eSIM-only} and part of a wider \emph{Heathrow} group should carry
+the narrower group above the broader one, so the narrow group's settings
+are the ones that survive.
+\end{wkinfo}
+
+\screenshot[0.42]{cc-group-assignments}{Group assignments on the kiosk Edit tab. Pick a group and select \textbf{Assign}; assigned groups are held in a display order, highest priority first.}
+
 \subsection{Working out where a parameter belongs}
 
 Ask how widely the value is true, and set it at that level:
@@ -313,6 +331,11 @@ scheduling the installation.
 \begin{enumerate}\setcounter{enumi}{4}
   \item The new kiosk appears as \textbf{In Stock}. That is expected ---
         it stays In Stock until it is installed.
+
+  \item If the kiosk belongs to any kiosk groups, open its \textbf{Edit}
+        tab and assign them under \textbf{Group assignments}. A kiosk can
+        be in several groups at once, and the order they sit in decides
+        which one wins a conflict --- see \S\ref{sec:groupsorder}.
 \end{enumerate}
 
 \subsection{Set the payment credentials}
