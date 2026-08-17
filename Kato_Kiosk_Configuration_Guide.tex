@@ -40,31 +40,44 @@ machine into kiosk mode.\\
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  chip/.style={draw=weknowazure,fill=white,rounded corners=3pt,
-               minimum width=31mm,minimum height=12mm,align=center,
-               inner sep=2pt,font=\scriptsize},
-  lane/.style={font=\footnotesize\bfseries,text=weknowsea,align=center},
-  arr/.style={-{Stealth[length=2.2mm]},thick,weknowazure},
-  handoff/.style={-{Stealth[length=2.2mm]},thick,weknowgreyN,dashed}]
+  box/.style={draw=weknowazure,fill=white,rounded corners=3pt,
+              text width=26mm,minimum height=12mm,align=center,
+              inner sep=3pt,font=\scriptsize},
+  lane/.style={font=\small\bfseries,text=weknowsea,align=center,
+               text width=20mm},
+  arr/.style={-{Stealth[length=2.4mm]},thick,weknowazure},
+  handoff/.style={-{Stealth[length=2.4mm]},thick,weknowgreyN,dashed}]
 
-  \node[chip] (a1) at (0,0)    {Create kiosk in\\Command Centre};
-  \node[chip] (a2) at (4.3,0)  {Clear\\prep checks};
-  \node[chip] (a3) at (8.6,0)  {Create installation\\record};
-  \node[chip] (b2) at (4.3,-2.5) {Install the\\Kato app};
-  \node[chip] (b3) at (8.6,-2.5) {Lock into\\kiosk mode};
+  % --- Account Manager lane ---
+  \node[box]  (t1) at (0,0)   {Create location\\and kiosk};
+  \node[box]  (t2) at (3.5,0) {Configure and\\clear prep checks};
+  \node[box]  (t3) at (7.0,0) {Generate\\credentials};
+  \node[box]  (t4) at (10.5,0) {Create installation\\record};
+  \node[lane] (l1) at (-2.8,0) {Part 1\\Account Manager};
 
-  \node[lane] at (-2.6,0)    {Part 1\\Account Manager};
-  \node[lane] at (-2.6,-2.5) {Part 2\\IT};
+  % --- IT lane ---
+  \node[box]  (b1) at (7.0,-2.7) {Install the\\Kato app};
+  \node[box]  (b2) at (10.5,-2.7) {Lock into\\kiosk mode};
+  \node[lane] (l2) at (-2.8,-2.7) {Part 2\\IT};
 
-  \draw[arr] (a1) -- (a2);
-  \draw[arr] (a2) -- (a3);
-  \draw[arr] (b2) -- (b3);
+  % --- Lane bands ---
+  \begin{scope}[on background layer]
+    \node[fill=weknowsky,rounded corners=4pt,inner sep=3.5mm,
+          fit=(l1)(t1)(t4)] {};
+    \node[fill=weknowgreyL,rounded corners=4pt,inner sep=3.5mm,
+          fit=(l2)(b1)(b2)] {};
+  \end{scope}
 
-  \draw[handoff] (a1.south) -- ++(0,-1.25) -| (b2.north);
-  \node[font=\scriptsize,text=weknowgreyN,fill=white,inner sep=1.5pt]
-       at (2.15,-1.25) {Kiosk ID + API key};
+  \draw[arr] (t1) -- (t2);
+  \draw[arr] (t2) -- (t3);
+  \draw[arr] (t3) -- (t4);
+  \draw[arr] (b1) -- (b2);
+
+  \draw[handoff] (t3.south) -- (b1.north);
+  \node[font=\scriptsize,text=weknowgreyN,anchor=west]
+       at ([xshift=2.5mm]$(t3.south)!0.5!(b1.north)$) {Kiosk ID + API key};
 \end{tikzpicture}
-\caption{The Account Manager creates the record and hands two credentials to IT, who install and lock down the machine.}
+\caption{The Account Manager configures the kiosk and hands two credentials to IT, who install the app and lock the machine down.}
 \end{figure}
 
 \begin{wkwarn}[The machine must already be built]
@@ -105,13 +118,20 @@ first.
 \renewcommand{\arraystretch}{1.3}\small
 \begin{tabularx}{\textwidth}{X X}
 \rowcolor{weknowgreyL}
-\emptybox\ Hotel name & \emptybox\ Timezone\\
-\emptybox\ Products to enable & \emptybox\ VAT / Tax ID\\
+\emptybox\ Hotel name & \emptybox\ Currency\\
+\emptybox\ Which products to enable & \emptybox\ Timezone\\
 \rowcolor{weknowgreyL}
-\emptybox\ Currency & \emptybox\ Tax entity name\\
+\emptybox\ Products for the home screen & \emptybox\ Relevant airports\\
+\emptybox\ Default language (kiosk + PDQ) & \emptybox\ Default Uber suggestions\\
+\rowcolor{weknowgreyL}
+\emptybox\ VAT / Tax ID & \emptybox\ Tax entity name\\
 \emptybox\ Banking details (in full) & \\
 \end{tabularx}
 \end{center}
+
+This is the \emph{minimum}. Many other parameters can be configured at
+each level of the hierarchy --- see \S\ref{sec:hierarchy} for where each
+one belongs.
 
 \begin{wkwarn}[Legacy fields --- not required]
 \textbf{RPS customer code} and \textbf{outlet code} are legacy fields.
@@ -138,7 +158,103 @@ kiosk's serial number in Command Centre.\\
 Both go into the install command in Part~2 --- do not swap them.
 
 %=====================================================================
-% 2  PART 1 -- COMMAND CENTRE
+% 2  CONFIGURATION HIERARCHY
+%=====================================================================
+\clearpage
+\section{How configuration resolves \role{Account Manager}}\label{sec:hierarchy}
+
+Configuration is layered. An individual kiosk should carry the
+\textbf{minimum configuration needed} --- only the things genuinely unique
+to that kiosk. Everything else resolves down from the levels above it.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  lvl/.style={rounded corners=2.5pt,draw=weknowazure60,
+              minimum height=8mm,align=center,inner xsep=4pt,
+              font=\scriptsize,text=weknownight},
+  node distance=1.6mm]
+
+  \node[lvl,fill=weknowgreyL]    (g)  {Global};
+  \node[lvl,fill=weknowazure20,right=of g]  (co) {Country};
+  \node[lvl,fill=weknowazure20,right=of co] (re) {Region\\(State)};
+  \node[lvl,fill=weknowazure40,right=of re] (ci) {City};
+  \node[lvl,fill=weknowazure40,right=of ci] (lg) {Location\\Group};
+  \node[lvl,fill=weknowazure60,right=of lg] (lo) {Location};
+  \node[lvl,fill=weknowazure60,right=of lo] (kg) {Kiosk\\Group};
+  \node[lvl,fill=weknowazure80,right=of kg] (ki) {Kiosk};
+
+  \draw[-{Stealth[length=2.4mm]},thick,weknowazure]
+       ([yshift=-5mm]g.south west) -- ([yshift=-5mm]ki.south east);
+  \node[font=\scriptsize,text=weknowgreyN,anchor=north]
+       at ([yshift=-6mm]$(g.south west)!0.5!(ki.south east)$)
+       {widest scope \quad$\longrightarrow$\quad most specific --- and highest priority};
+\end{tikzpicture}
+\caption{The configuration hierarchy. Anything set further right overrides the same parameter set further left.}
+\end{figure}
+
+\subsection{The rule}
+
+A parameter set at a \textbf{more granular} level overrides the same
+parameter set at a \textbf{wider} level. So a currency set on a Country
+applies to every location in it, until a specific Location --- or a single
+Kiosk --- sets its own.
+
+\begin{wkinfo}[Set each parameter at the widest level where it holds true]
+If every kiosk in a country shares a currency, set it once on the Country;
+do not repeat it on each kiosk. Repeating a value further down does no
+harm on day one, but it is the thing that makes later changes miss ---
+you update the Country and the kiosk keeps its own stale override.
+\end{wkinfo}
+
+\subsection{Working out where a parameter belongs}
+
+Ask how widely the value is true, and set it at that level:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Level} &
+\color{white}\textbf{Typically carries}\\
+Global &
+Anything true of every WeKnow kiosk everywhere. Rarely touched.\\
+\rowcolor{weknowgreyL}
+Country &
+Things that follow the market --- currency, tax treatment, default
+language.\\
+Region (State) &
+Regional variations within a country, where they exist.\\
+\rowcolor{weknowgreyL}
+City &
+Things that follow geography --- relevant airports, default Uber
+suggestions.\\
+Location Group &
+A set of sites treated the same, e.g.\ one hotel brand or one operator
+across several properties.\\
+\rowcolor{weknowgreyL}
+Location &
+The property itself --- hotel name, address, tax entity, banking details.\\
+Kiosk Group &
+A set of kiosks treated the same within a site, e.g.\ all kiosks in one
+terminal.\\
+\rowcolor{weknowgreyL}
+Kiosk &
+Only what is unique to the single machine.\\
+\end{tabularx}
+\end{center}
+
+The right-hand column is a guide to intent, not a fixed schema --- many
+parameters can legitimately be set at more than one level. What matters is
+choosing the widest one that is still correct.
+
+\begin{wkinfo}[Check what a kiosk actually ends up with]
+The kiosk's \textbf{Resolved} tab shows the effective configuration after
+the whole hierarchy has been applied. Use it to confirm a kiosk is picking
+up what you intended --- and to find the stale override when it is not.
+\end{wkinfo}
+
+%=====================================================================
+% 3  PART 1 -- COMMAND CENTRE
 %=====================================================================
 \clearpage
 \section{Part 1 --- Command Centre \role{Account Manager}}

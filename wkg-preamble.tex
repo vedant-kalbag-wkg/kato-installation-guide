@@ -148,9 +148,10 @@
 \newcommand{\tick}{{\color{weknowsea}$\checkmark$}}
 \newcommand{\emptybox}{{\color{weknowgreyM}$\square$}}
 
-% Role badge for section headings, e.g. \role{AM}
+% Role badge for section headings, e.g. \role{Account Manager}
 \newcommand{\role}[1]{\texorpdfstring{%
-  {\colorbox{weknowazure20}{\textcolor{weknownight}{\footnotesize\bfseries #1}}}}{[#1]}}
+  {\setlength{\fboxsep}{5pt}%
+   \colorbox{weknowazure}{\textcolor{white}{\large\bfseries #1}}}}{[#1]}}
 
 %---------------------------------------------------------------------
 % Cover page -- \makewkgcover{title}{subtitle}{audience}
