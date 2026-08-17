@@ -502,12 +502,12 @@ All prep checks show as complete on the kiosk record.
 %=====================================================================
 \section{Stage 4 --- Install the Kato app}
 
-This is done \textbf{signed in as \wpath{SelfBooker}}, temporarily
-granted administrator rights.
+This is done \textbf{signed in as \wpath{SelfBooker}} --- the account the
+kiosk will run as. Stage~1 must already be complete: you need the Kiosk ID
+and API key before you can run the installer.
 
 \begin{enumerate}
-  \item Sign in to Windows as \wpath{SelfBooker} and give the account
-        administrator rights for the duration of the install.
+  \item Sign in to Windows as \wpath{SelfBooker}.
 
   \item Open \textbf{PowerShell} in the folder containing the installer
         and run the silent install, substituting your four values:
@@ -544,18 +544,15 @@ build --- confirm in Device Manager if printing fails.\\
         create it before continuing --- the app will not connect
         without it.
 
-  \item \textbf{Remove the administrator rights} from \wpath{SelfBooker}
-        again. The kiosk account must not run as an administrator in
-        service.
-
-  \item Sign out of \wpath{SelfBooker}.
+  \item Sign out of \wpath{SelfBooker}, then sign in as \wpath{WKGAdmin}
+        to set up the shell utility in stage~5.
 \end{enumerate}
 
 \begin{wkinfo}[Done when]
 The app is installed at
 \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash AppData\textbackslash Local\textbackslash Programs\textbackslash Kiosk\textbackslash Kiosk.exe},
-\wpath{kiosk-identity.json} is correct, and \wpath{SelfBooker} is back to
-a standard user.
+\wpath{kiosk-identity.json} is correct, and you are signed out of
+\wpath{SelfBooker}.
 \end{wkinfo}
 
 %=====================================================================
@@ -570,9 +567,8 @@ the machine boots straight into the kiosk and there is no desktop to
 escape to.
 
 \begin{enumerate}
-  \item Sign in as \wpath{WKGAdmin} and run\\
-        \wpath{C:\textbackslash Kiosk\textbackslash SSM25\_files\textbackslash Shell-Launcher-Utilities\textbackslash SLUtility.exe}\\
-        as administrator.
+  \item Signed in as \wpath{WKGAdmin}, run\\
+        \wpath{C:\textbackslash Kiosk\textbackslash SSM25\_files\textbackslash Shell-Launcher-Utilities\textbackslash SLUtility.exe}
 
   \item Select \textbf{Disable User Shell}.
 
@@ -666,13 +662,12 @@ both Running.\\
 at today's date.\\
 \emptybox & \wpath{kiosk-identity.json} present and correct.\\
 \rowcolor{weknowgreyL}
-\emptybox & \wpath{SelfBooker} is \textbf{not} an administrator.\\
 \emptybox & Machine reboots straight into the Kato app --- no desktop.\\
-\rowcolor{weknowgreyL}
 \emptybox & Printer prints, scanner scans, sensors respond.\\
-\emptybox & Test payment taken on the PDQ and refunded.\\
 \rowcolor{weknowgreyL}
+\emptybox & Test payment taken on the PDQ and refunded.\\
 \emptybox & Installation record created and linked to the location.\\
+\rowcolor{weknowgreyL}
 \emptybox & API key removed from your notes / ticket once confirmed
 working.\\
 \end{tabularx}
