@@ -41,6 +41,8 @@ from the FreedomPay certification guide — it is outdated.
 - `images/cc-*.png` — Command Centre screenshots (locations, kiosks, prep
   checks, API keys, installations).
 - `images/fcc-*.png` — FreedomPay FCC installer and log screenshots.
+- `images/ncentral-powershell.png` — N-central System Shell, for the one-run
+  install script.
 
 ## Branding
 

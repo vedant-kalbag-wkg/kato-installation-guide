@@ -157,6 +157,35 @@ kiosk's serial number in Command Centre.\\
 
 Both go into the install command in Part~2 --- do not swap them.
 
+\subsection{Important paths}\label{sec:paths}
+
+Every file and setting this guide touches on the kiosk machine.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{What} &
+\color{white}\textbf{Where}\\
+Identity file &
+\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash AppData\textbackslash Roaming\textbackslash WKG Kiosk\textbackslash kiosk-identity.json}\\
+\rowcolor{weknowgreyL}
+Kato app &
+\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash AppData\textbackslash Local\textbackslash Programs\textbackslash Kiosk\textbackslash Kiosk.exe}\\
+Installer drop folder &
+\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}\\
+\rowcolor{weknowgreyL}
+Shell Launcher utility &
+\wpath{C:\textbackslash Kiosk\textbackslash SSM25\_files\textbackslash Shell-Launcher-Utilities\textbackslash SLUtility.exe}\\
+FCC logs &
+\wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash log}\\
+\rowcolor{weknowgreyL}
+FCC registry key &
+\wpath{HKEY\_LOCAL\_MACHINE\textbackslash SOFTWARE\textbackslash Freedompay\textbackslash Atlas\textbackslash PAL}\\
+Latest app release &
+\href{https://github.com/WeKnowTechnology/wkg-electron-app/releases}{\wpath{github.com/WeKnowTechnology/wkg-electron-app/releases}}\\
+\end{tabularx}
+\end{center}
+
 %=====================================================================
 % 2  CONFIGURATION HIERARCHY
 %=====================================================================
@@ -432,7 +461,210 @@ You need the Kiosk ID and API key from the Account Manager before you
 start. The machine must already be built per the \emph{Kato Kiosk Setup
 Guide}.
 
-\subsection{Install the Kato app}
+\subsection{Get the installer onto the machine}
+
+\begin{enumerate}
+  \item Download the latest \wpath{Kiosk Setup X.Y.Z.exe} from the
+        \href{https://github.com/WeKnowTechnology/wkg-electron-app/releases}{app
+        releases page}.
+
+  \item Copy it into\\
+        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}\\
+        This is the folder the N-central script looks in. Keep only one
+        installer there --- if several are present the script takes the
+        highest version and warns about the rest.
+\end{enumerate}
+
+Then install using \textbf{one} of the two methods below. The N-central
+script is preferred: it validates the credentials, runs the install as
+\wpath{SelfBooker} and checks the result for you.
+
+\subsection{Option A --- One-run script from N-central}\label{sec:ncentral}
+
+\begin{enumerate}
+  \item Make sure \wpath{SelfBooker} is \textbf{signed in} on the machine.
+        The install is per-user, and the script warns if the account is not
+        logged on.
+
+  \item Open the N-central remote connection to the machine. In the
+        \textbf{System Shell} panel, select the \textbf{PowerShell} icon at
+        the top right to switch the shell to PowerShell mode.
+\end{enumerate}
+
+\screenshot[0.94]{ncentral-powershell}{N-central System Shell. The PowerShell icon is the first of the three at the top right; the shell shows \textbf{Powershell} once switched.}
+
+\begin{enumerate}\setcounter{enumi}{2}
+  \item Edit the three values at the top of the script --- \wpath{\$KioskId},
+        \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- then paste the whole
+        script into the shell.
+
+  \item Press \textbf{Enter twice}: once to submit the script and once to
+        run it.
+
+  \item Wait for \textbf{\texttt{=== SUCCESS ===}}. Anything else ends in
+        \texttt{=== FAILED ===} with the reason on the next line.
+\end{enumerate}
+
+\begin{lstlisting}
+<#
+    Deploy WKG Kiosk. Run as SYSTEM.
+    Per-user install into the target account's profile via a scheduled task.
+    Picks the highest-versioned installer present in the folder.
+#>
+
+$TargetUser     = 'SelfBooker'
+$InstallerDir   = 'C:\Users\SelfBooker\Documents'
+$KioskId        = '{KIOSK_ID_FROM_COMMAND_CENTRE}'
+$WorkstationId  = '{WKG-POS-XXX}'
+$ApiKey         = '{API_KEY_FROM_COMMAND_CENTRE}'
+$RequireVersion = $null      # e.g. '1.1.1' to pin; $null accepts the newest found
+
+$ErrorActionPreference = 'Stop'
+$task  = 'KioskInstall'
+$start = Get-Date
+
+function Step($m) { Write-Host ("[{0,5:n1}s] {1}"       -f ((Get-Date)-$start).TotalSeconds, $m) }
+function Ok($m)   { Write-Host ("[{0,5:n1}s]   OK  {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Green }
+function Warn($m) { Write-Host ("[{0,5:n1}s]   !   {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Yellow }
+
+try {
+    Write-Host ""
+    Write-Host "=== WKG Kiosk install: $WorkstationId on $env:COMPUTERNAME ==="
+    Write-Host ""
+
+    Step 'Validating parameters'
+    $checks = @{
+        KioskId       = @($KioskId,       '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
+        WorkstationId = @($WorkstationId, '^[A-Za-z0-9][A-Za-z0-9-]{1,14}$')
+        ApiKey        = @($ApiKey,        '^kcs_[A-Za-z0-9_-]{24,}$')
+    }
+    foreach ($k in $checks.Keys) {
+        $val, $pattern = $checks[$k]
+        if ($val -cnotmatch $pattern) { throw "$k is malformed: '$val'" }
+    }
+    Ok 'Parameters well-formed'
+
+    Step "Locating installer in $InstallerDir"
+    if (-not (Test-Path -LiteralPath $InstallerDir)) { throw "Folder not found: $InstallerDir" }
+
+    $candidates = Get-ChildItem -LiteralPath $InstallerDir -Filter 'Kiosk*Setup*.exe' -File -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            if ($_.Name -match '(\d+\.\d+\.\d+)') {
+                [pscustomobject]@{ Path = $_.FullName; Version = [version]$Matches[1]; Name = $_.Name }
+            }
+        } | Sort-Object Version -Descending
+
+    if (-not $candidates) { throw "No Kiosk installer found in $InstallerDir" }
+
+    $chosen        = @($candidates)[0]
+    $InstallerPath = $chosen.Path
+    Ok "Selected $($chosen.Name)  (v$($chosen.Version))"
+
+    if (@($candidates).Count -gt 1) {
+        $older = (@($candidates) | Select-Object -Skip 1 | ForEach-Object { $_.Name }) -join ', '
+        Warn "$(@($candidates).Count) installers present. Ignoring: $older"
+    }
+
+    $fileVer = (Get-Item -LiteralPath $InstallerPath).VersionInfo.ProductVersion
+    if ($fileVer -and ([version]$fileVer) -ne $chosen.Version) {
+        Warn "Filename says v$($chosen.Version) but file metadata says v$fileVer"
+    }
+    if ($RequireVersion -and $chosen.Version -ne [version]$RequireVersion) {
+        throw "Expected v$RequireVersion, found v$($chosen.Version)"
+    }
+
+    Step "Checking target user: $TargetUser"
+    if (-not (Get-LocalUser -Name $TargetUser -ErrorAction SilentlyContinue)) {
+        throw "No local user '$TargetUser'"
+    }
+    if ((quser 2>$null) -match "\s$TargetUser\s") { Ok 'User present and logged on' }
+    else { Warn 'User exists but is not logged on - per-user install may misbehave' }
+
+    Step 'Registering scheduled task'
+    $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey"
+    Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
+    Register-ScheduledTask -TaskName $task `
+        -Action    (New-ScheduledTaskAction -Execute $InstallerPath -Argument $argLine) `
+        -Principal (New-ScheduledTaskPrincipal -UserId $TargetUser -LogonType Interactive -RunLevel Limited) `
+        -Force | Start-ScheduledTask
+    Ok 'Task registered and started'
+
+    Step 'Waiting for installer to start (max 15s)'
+    $by = (Get-Date).AddSeconds(15)
+    do { Start-Sleep 1 }
+    while ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and (Get-Date) -lt $by)
+
+    $info = Get-ScheduledTask -TaskName $task | Get-ScheduledTaskInfo
+    if ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and $info.LastTaskResult -ne 0) {
+        throw ("Task did not start. LastTaskResult 0x{0:X}" -f $info.LastTaskResult)
+    }
+    Ok 'Installer running'
+
+    Step 'Waiting for task to complete (max 120s)'
+    $by = (Get-Date).AddSeconds(120)
+    do { Start-Sleep 2 }
+    while ((Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $by)
+    if ((Get-ScheduledTask -TaskName $task).State -eq 'Running') { Warn 'Task still running at timeout' }
+    else { Ok 'Task finished' }
+
+    Step 'Waiting for setup process to exit (max 60s)'
+    $setupName = [System.IO.Path]::GetFileNameWithoutExtension($InstallerPath)
+    $by = (Get-Date).AddSeconds(60)
+    while ((Get-Process -Name $setupName -ErrorAction SilentlyContinue) -and (Get-Date) -lt $by) {
+        Start-Sleep 2
+    }
+    if (Get-Process -Name $setupName -ErrorAction SilentlyContinue) {
+        Warn 'Setup still alive (likely session 0, no desktop) - stopping it'
+        Get-Process -Name $setupName -ErrorAction SilentlyContinue | Stop-Process -Force
+    } else {
+        Ok 'Setup exited cleanly'
+    }
+    Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
+
+    Step 'Verifying install'
+    $exe  = "C:\Users\$TargetUser\AppData\Local\Programs\Kiosk\Kiosk.exe"
+    $json = "C:\Users\$TargetUser\AppData\Roaming\WKG Kiosk\kiosk-identity.json"
+
+    if (-not (Test-Path -LiteralPath $exe)) { throw "Kiosk.exe missing at $exe" }
+    Ok ("Kiosk.exe present ({0} MB)" -f [math]::Round((Get-Item -LiteralPath $exe).Length / 1MB))
+
+    if (-not (Test-Path -LiteralPath $json)) { throw "Not provisioned, no file at $json" }
+    Ok 'Identity file written'
+
+    $cfg = Get-Content -LiteralPath $json -Raw | ConvertFrom-Json
+    $bad = @()
+    if ($cfg.kioskId       -cne $KioskId)       { $bad += "kioskId='$($cfg.kioskId)'" }
+    if ($cfg.workstationId -cne $WorkstationId) { $bad += "workstationId='$($cfg.workstationId)'" }
+    if ($bad) { throw "Config mismatch: $($bad -join '; ')" }
+
+    Ok "Identity matches: $WorkstationId"
+    Ok "Printer: $($cfg.printerDestination)"
+
+    Write-Host ""
+    Write-Host ("=== SUCCESS in {0:n1}s  (v{1}) ===" -f ((Get-Date)-$start).TotalSeconds, $chosen.Version) -ForegroundColor Green
+    Write-Host ""
+    exit 0
+}
+catch {
+    Write-Host ""
+    Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host ""
+    Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
+    exit 1
+}
+\end{lstlisting}
+
+\begin{wkinfo}[The script does not set the printer]
+It installs with the default port, \wpath{COM8}, and prints the port it
+ended up with on the \texttt{Printer:} line. If the printer is elsewhere,
+correct it in \wpath{kiosk-identity.json} --- see \S\ref{sec:comport}.
+\end{wkinfo}
+
+Skip to step~3 of Option~B to confirm the identity file, then continue with
+the lockdown.
+
+\subsection{Option B --- Manually, signed in as \wpath{SelfBooker}}
 
 Done \textbf{signed in as \wpath{SelfBooker}} --- the account the kiosk
 runs as.
@@ -440,12 +672,14 @@ runs as.
 \begin{enumerate}
   \item Sign in to Windows as \wpath{SelfBooker}.
 
-  \item Open \textbf{PowerShell} in the folder containing the installer
-        and run the silent install, substituting your four values:
+  \item Open \textbf{PowerShell} in
+        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}
+        and run the silent install, substituting the installer version and
+        your four values:
 \end{enumerate}
 
 \begin{lstlisting}
-& ".\Kiosk Setup 1.0.0.exe" /S `
+& ".\Kiosk Setup X.Y.Z.exe" /S `
   /KIOSKID={KIOSK_ID_FROM_COMMAND_CENTRE} `
   /WORKSTATIONID={WKG-POS-XXX} `
   /APIKEY={API_KEY_FROM_COMMAND_CENTRE} `
@@ -471,10 +705,9 @@ build. If nothing prints, the port is wrong --- see
 
 \begin{enumerate}\setcounter{enumi}{2}
   \item Confirm the app wrote its identity file. Open
-        \wpath{kiosk-identity.json} and check the Kiosk ID, workstation ID
-        and API key are present and correct. If the file is missing,
-        create it before continuing --- the app will not connect without
-        it.
+        \wpath{kiosk-identity.json} (\S\ref{sec:paths}) and run through the
+        checks in \S\ref{sec:identity}. If the file is missing, create it
+        before continuing --- the app will not connect without it.
 
   \item Sign out of \wpath{SelfBooker}, then sign in as \wpath{WKGAdmin}
         for the lockdown below.
@@ -566,13 +799,20 @@ restarting the utility between \emph{Disable User Shell} and setting the
 path.\\
 \rowcolor{weknowgreyL}
 App launches but will not connect &
-Check \wpath{kiosk-identity.json}: wrong Kiosk ID, or an API key that was
-regenerated after the install. Generate a fresh key and reinstall with the
-new value.\\
+Work through the \wpath{kiosk-identity.json} checks in
+\S\ref{sec:identity} --- dev server URLs, a stray backtick on a value, a
+wrong Kiosk ID, or an API key regenerated after the install.\\
 Installer runs but nothing appears &
 The switches are case-sensitive and the backtick line continuations must
 be the last character on each line. Retype the command rather than
-pasting it from a chat client.\\
+pasting it from a chat client, or use the N-central script
+(\S\ref{sec:ncentral}).\\
+N-central script ends in \texttt{FAILED} &
+The line under \texttt{FAILED} names the cause. \emph{Malformed} means a
+value at the top of the script is mistyped; \emph{No Kiosk installer
+found} means the installer is not in
+\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents};
+\emph{Not provisioned} usually means \wpath{SelfBooker} was not signed in.\\
 \rowcolor{weknowgreyL}
 Printer does nothing &
 The configured COM port is wrong. Find the port the printer is actually
@@ -587,6 +827,60 @@ That is a machine-build issue, not a configuration one. See the
 \emph{Kato Kiosk Setup Guide}.\\
 \end{tabularx}
 \end{center}
+
+\subsection{Checking \wpath{kiosk-identity.json}}\label{sec:identity}
+
+Most \emph{will not connect} faults are in this file. Open it in Notepad
+(path in \S\ref{sec:paths}). A correct file looks like this:
+
+\begin{lstlisting}
+{
+  "kioskId": "{KIOSK_ID_FROM_COMMAND_CENTRE}",
+  "apiBaseUrl": "https://api.weknow.technology/api",
+  "apiKey": "{API_KEY_FROM_COMMAND_CENTRE}",
+  "workstationId": "WKG-POS-XXX",
+  "printerDestination": "COM8",
+  "fleetSocketUrl": "wss://api.weknow.technology"
+}
+\end{lstlisting}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Field} &
+\color{white}\textbf{Check}\\
+\wpath{apiBaseUrl} &
+Must be \wpath{https://api.weknow.technology/api} --- \textbf{not}
+\wpath{https://dev.weknow.technology/api}.\\
+\rowcolor{weknowgreyL}
+\wpath{fleetSocketUrl} &
+Must be \wpath{wss://api.weknow.technology} --- \textbf{not}
+\wpath{wss://dev.weknow.technology}.\\
+\wpath{kioskId} &
+Matches the Kiosk ID on the kiosk's Overview tab, and does \textbf{not end
+in a backtick} (\wpath{`}).\\
+\rowcolor{weknowgreyL}
+\wpath{apiKey} &
+Matches the key generated for this kiosk, and does \textbf{not end in a
+backtick}.\\
+\wpath{workstationId} &
+The machine label, e.g.\ \wpath{WKG-POS-617} --- not the Kiosk ID.\\
+\rowcolor{weknowgreyL}
+\wpath{printerDestination} &
+The printer's COM port (\S\ref{sec:comport}).\\
+\end{tabularx}
+\end{center}
+
+\begin{wkwarn}[Why a backtick ends up in a value]
+In the manual install command, each line ends in a backtick to continue
+it. If a space follows the backtick, or the command is pasted onto one
+line, PowerShell passes the backtick through as part of the value. Delete
+it from the file.
+\end{wkwarn}
+
+Fix any wrong value directly in the file, save, and restart the app ---
+there is no need to reinstall. The one exception is an API key that no
+longer works at all: generate a new one in Command Centre and paste that in.
 
 \subsection{Finding the printer's COM port}\label{sec:comport}
 
@@ -712,9 +1006,11 @@ the full detail is in the sections above.
   \item \emptybox\ Confirm the machine is built --- see the
         \emph{Kato Kiosk Setup Guide}.
   \item \emptybox\ Sign in to Windows as \wpath{SelfBooker}.
-  \item \emptybox\ Run the silent install (command below).
-  \item \emptybox\ Check \wpath{kiosk-identity.json} --- Kiosk ID,
-        workstation ID, API key.
+  \item \emptybox\ Copy the latest installer into
+        \wpath{SelfBooker\textbackslash Documents}.
+  \item \emptybox\ Run the N-central script, or the silent install below.
+  \item \emptybox\ Check \wpath{kiosk-identity.json} --- IDs, API key, no
+        trailing backtick, \wpath{api.} not \wpath{dev.} URLs.
   \item \emptybox\ Sign out; sign in as \wpath{WKGAdmin}.
   \item \emptybox\ \wpath{SLUtility}: \textbf{Disable User Shell}.
   \item \emptybox\ Close and reopen \wpath{SLUtility}. Do not skip.
@@ -750,7 +1046,7 @@ Printer COM port & \wpath{COM8} unless the site differs.\\
 \wpath{SelfBooker}:
 
 \begin{lstlisting}
-& ".\Kiosk Setup 1.0.0.exe" /S /KIOSKID={KIOSK_ID} /WORKSTATIONID={WKG-POS-XXX} /APIKEY={API_KEY} /PRINTER=COM8
+& ".\Kiosk Setup X.Y.Z.exe" /S /KIOSKID={KIOSK_ID} /WORKSTATIONID={WKG-POS-XXX} /APIKEY={API_KEY} /PRINTER=COM8
 \end{lstlisting}
 
 \begin{center}
