@@ -1046,8 +1046,11 @@ Printer COM port & \wpath{COM8} unless the site differs.\\
 \end{center}
 
 \vspace{4pt}
-\noindent\textbf{\footnotesize Silent install} --- PowerShell, as
-\wpath{SelfBooker}:
+\noindent{\footnotesize\textbf{Silent install} --- two ways, same result.
+Either run the command below in PowerShell, signed in as
+\wpath{SelfBooker}; or run the full \wpath{Install-Kiosk.ps1} script from
+the N-central System Shell in PowerShell mode (\S\ref{sec:ncentral}),
+which also validates the values and checks the install.}
 
 \begin{lstlisting}
 & ".\Kiosk Setup X.Y.Z.exe" /S /KIOSKID={KIOSK_ID} /WORKSTATIONID={WKG-POS-XXX} /APIKEY={API_KEY} /PRINTER=COM8
