@@ -243,18 +243,33 @@ you update the Country and the kiosk keeps its own stale override.
 \subsection{When a kiosk is in more than one group}\label{sec:groupsorder}
 
 A kiosk can belong to \textbf{several kiosk groups at once}. Assign them
-on the kiosk's \textbf{Edit} tab, under \textbf{Group assignments}.
+on the kiosk's \textbf{Edit} tab, under \textbf{Group assignments}. A
+location can likewise belong to several location groups, and both tiers
+follow the same rule below.
 
 Assigned groups carry a \textbf{display order}, and that order decides
 conflicts: where two of a kiosk's groups set the same parameter, the group
-\textbf{higher in the list wins} and overrides the ones below it.
+\textbf{lower in the list wins} and overrides the ones above it. The list
+runs widest first, exactly like the hierarchy above it --- later beats
+earlier --- so the bottom of the list is the most specific position, not
+the top.
 
 \begin{wkinfo}[Order the groups deliberately]
-Put the most specific group at the top. A kiosk that is both
+Put the most specific group at the bottom. A kiosk that is both
 \emph{eSIM-only} and part of a wider \emph{Heathrow} group should carry
-the narrower group above the broader one, so the narrow group's settings
+the narrower group below the broader one, so the narrow group's settings
 are the ones that survive.
+
+A newly assigned group is added at the bottom, which makes it the winner
+by default. If you assign a broad group after a narrow one, move it up.
 \end{wkinfo}
+
+\begin{wkwarn}[The screen does not tell you which end wins]
+The rows show only an order number. Nothing on the panel says whether the
+top or the bottom takes precedence, so after any reorder confirm the
+outcome on the kiosk's \textbf{Resolved} tab rather than trusting the
+list.
+\end{wkwarn}
 
 \subsection{Working out where a parameter belongs}
 
@@ -368,7 +383,7 @@ scheduling the installation.
         which one wins a conflict --- see \S\ref{sec:groupsorder}.
 \end{enumerate}
 
-\screenshot[0.36]{cc-group-assignments}{Group assignments on the kiosk Edit tab. Pick a group and select \textbf{Assign}; assigned groups are held in a display order, highest priority first.}
+\screenshot[0.36]{cc-group-assignments}{Group assignments on the kiosk Edit tab. Pick a group and select \textbf{Assign}; assigned groups are held in a display order, widest first, and the group at the bottom wins a conflict.}
 
 \subsection{Set the payment credentials}
 
@@ -989,7 +1004,7 @@ the full detail is in the sections above.
   \item \emptybox\ \textbf{Add Kiosk} --- name, serial, hardware model,
         firmware.
   \item \emptybox\ Assign kiosk groups on the \textbf{Edit} tab.
-        Top of the list wins a conflict.
+        Bottom of the list wins a conflict --- most specific last.
   \item \emptybox\ Set the \textbf{Store ID} and \textbf{Terminal ID}.
   \item \emptybox\ Clear the prep checks --- only after IT confirm
         hardware and FreedomPay.
