@@ -9,6 +9,7 @@ the work:
 | Part 2 | IT | Silent app install (N-central script or manual) and kiosk lockdown. |
 | Appendix A | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Once per machine, before Part 2. |
 | Appendix B | Both | One-page quick reference. |
+| Appendix C | IT | The N-central install script, printed on its own pages. |
 
 ## Build
 

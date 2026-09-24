@@ -504,19 +504,21 @@ script is preferred: it validates the credentials, runs the install as
 \screenshot[0.94]{ncentral-powershell}{N-central System Shell. The PowerShell icon is the first of the three at the top right; the shell shows \textbf{Powershell} once switched.}
 
 \begin{enumerate}\setcounter{enumi}{2}
-  \item Open the script: click \textattachfile[mimetype=text/plain,color=0 0.651 0.827]{scripts/Install-Kiosk.ps1}{\textbf{Install-Kiosk.ps1}}
-        to open it straight from this PDF.
-        The attachment opens in Adobe Acrobat/Reader and Microsoft Edge ---
-        not in Chrome's built-in viewer, where you should copy the listing
-        below instead. The listing runs over a page break, so copy each
-        page's part separately --- a single selection picks up the page
-        header and footer, which break the script.
+  \item Click the button below. The script opens in Notepad.
+        \begin{center}
+        \textattachfile[mimetype=text/plain,color=1 1 1]{scripts/Install-Kiosk.ps1}{%
+          \colorbox{weknowazure}{\color{white}\bfseries\strut\quad Open Install-Kiosk.ps1\quad}}
+        \end{center}
+        The button works in Adobe Acrobat/Reader and Microsoft Edge, not in
+        Chrome's built-in viewer. Without it, copy the printed script in
+        Appendix~\ref{sec:script} into Notepad.
 
   \item Replace the three values at the top --- \wpath{\$KioskId},
-        \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- then select all,
-        copy, and paste the whole script into the shell. The placeholders
-        are rejected by the script, so it will not run until they are
-        replaced.
+        \wpath{\$WorkstationId} and \wpath{\$ApiKey}. The script rejects
+        the placeholders, so it will not run until they are replaced.
+
+  \item Select all (\textbf{Ctrl+A}), copy (\textbf{Ctrl+C}), and paste
+        the whole script into the N-central shell.
 
   \item Press \textbf{Enter twice}: once to submit the script and once to
         run it.
@@ -524,8 +526,6 @@ script is preferred: it validates the credentials, runs the install as
   \item Wait for \textbf{\texttt{=== SUCCESS ===}}. Anything else ends in
         \texttt{=== FAILED ===} with the reason on the next line.
 \end{enumerate}
-
-\lstinputlisting[basicstyle=\ttfamily\scriptsize\color{weknowgraphite},breaklines=false]{scripts/Install-Kiosk.ps1}
 
 \begin{wkinfo}[The script does not set the printer]
 It installs with the default port, \wpath{COM8}, and prints the port it
@@ -718,7 +718,7 @@ Most \emph{will not connect} faults are in this file. Open it in Notepad
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
-\begin{tabularx}{\textwidth}{L{34mm} X}
+\begin{tabularx}{\textwidth}{L{40mm} X}
 \rowcolor{weknownight}\color{white}\textbf{Field} &
 \color{white}\textbf{Check}\\
 \wpath{apiBaseUrl} &
@@ -1071,5 +1071,19 @@ List with \wpath{mode}, then \wpath{DIR > COM3} from Command Prompt.
 Fix in \wpath{kiosk-identity.json} --- no reinstall.\\
 \end{tabularx}
 \end{center}
+
+%=====================================================================
+% APPENDIX C -- N-CENTRAL INSTALL SCRIPT
+%=====================================================================
+\clearpage
+\wksection{The N-central install script}\label{sec:script}
+
+\wpath{Install-Kiosk.ps1}, for Part~2 Option~A (\S\ref{sec:ncentral}). Use
+the \textbf{Open Install-Kiosk.ps1} button there where you can --- it
+copies in one go. If you copy from here instead, copy \textbf{one page at a
+time}: a selection across the page break picks up the page header and
+footer, which break the script.
+
+\lstinputlisting[basicstyle=\ttfamily\scriptsize\color{weknowgraphite},breaklines=false,aboveskip=4pt]{scripts/Install-Kiosk.ps1}
 
 \end{document}
