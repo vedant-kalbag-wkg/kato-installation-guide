@@ -5,11 +5,11 @@ the work:
 
 | Section | Audience | Covers |
 |---|---|---|
-| Part 1 | Account Managers | Command Centre: location, kiosk, prep checks, credentials, installation record. |
-| Part 2 | IT | Silent app install (N-central script or manual) and kiosk lockdown. |
+| Part 1 | Account Managers | Command Centre: location, kiosk, configuration, prep checks, installation record; send IT the kiosk's link. |
+| Part 2 | IT | Copy the Kiosk ID and generate the API key from that link (used at once, never saved), silent app install (N-central script or manual), kiosk lockdown. |
 | Appendix A | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Once per machine, before Part 2. |
-| Appendix B | Both | One-page quick reference. |
-| Appendix C | IT | The N-central install script, printed on its own pages. |
+| Appendix B | IT | The N-central install script, printed on one page. |
+| Appendix C | Both | One-page quick reference. |
 
 ## Build
 

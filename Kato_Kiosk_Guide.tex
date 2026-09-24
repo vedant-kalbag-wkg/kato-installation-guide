@@ -26,19 +26,37 @@ by who does the work:
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
-\begin{tabularx}{\textwidth}{L{20mm} L{34mm} X}
-\rowcolor{weknownight}\color{white}\textbf{Part} &
+\begin{tabularx}{\textwidth}{L{22mm} L{30mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Section} &
 \color{white}\textbf{Who} & \color{white}\textbf{What}\\
-\textbf{Part 1} & Account Manager &
-Create the location, kiosk and installation record in Command Centre,
-clear the prep checks, and hand the Kiosk ID and API key to IT.\\
+\S\ref{sec:before} & Both &
+Before you start: the location information to collect, the two
+identifiers, and the important paths on the machine.\\
 \rowcolor{weknowgreyL}
-\textbf{Part 2} & IT &
-Install the Kato app on the machine using those credentials, and lock the
-machine into kiosk mode.\\
-\textbf{Appendix A} & IT &
-Build the machine: install and verify FreedomPay FCC. Once per machine,
+\S\ref{sec:hierarchy} & Account Manager &
+How configuration resolves: which level of the hierarchy each setting
+belongs on.\\
+\S\ref{sec:part1} & Account Manager &
+Part 1: create the location, kiosk and installation record in Command
+Centre, clear the prep checks, and send IT the kiosk's link.\\
+\rowcolor{weknowgreyL}
+\S\ref{sec:part2} & IT &
+Part 2: copy the Kiosk ID, generate the API key, install the Kato app,
+and lock the machine into kiosk mode.\\
+\S\ref{sec:checklist} & Both &
+Final checklist, run before leaving site.\\
+\rowcolor{weknowgreyL}
+\S\ref{sec:trouble} & IT &
+When things go wrong: common faults, the identity file checks, and
+finding the printer's COM port.\\
+Appendix~\ref{sec:fcc} & IT &
+Building the machine: install and verify FreedomPay FCC. Once per machine,
 before Part~2.\\
+\rowcolor{weknowgreyL}
+Appendix~\ref{sec:script} & IT &
+The N-central install script, printed on one page.\\
+Appendix~\ref{sec:quickref} & Both &
+One-page quick reference for someone who has done this before.\\
 \end{tabularx}
 \end{center}
 
@@ -56,33 +74,35 @@ before Part~2.\\
   % --- Account Manager lane ---
   \node[box]  (t1) at (0,0)   {Create location\\and kiosk};
   \node[box]  (t2) at (3.5,0) {Configure and\\clear prep checks};
-  \node[box]  (t3) at (7.0,0) {Generate\\credentials};
-  \node[box]  (t4) at (10.5,0) {Create installation\\record};
+  \node[box]  (t3) at (7.0,0) {Create installation\\record};
+  \node[box]  (t4) at (10.5,0) {Send IT the\\kiosk link};
   \node[lane] (l1) at (-2.8,0) {Part 1\\Account Manager};
 
   % --- IT lane ---
-  \node[box]  (b1) at (7.0,-2.7) {Install the\\Kato app};
-  \node[box]  (b2) at (10.5,-2.7) {Lock into\\kiosk mode};
-  \node[lane] (l2) at (-2.8,-2.7) {Part 2\\IT};
+  \node[box]  (b1) at (3.5,-3.0) {Copy Kiosk ID,\\generate API key};
+  \node[box]  (b2) at (7.0,-3.0) {Install the\\Kato app};
+  \node[box]  (b3) at (10.5,-3.0) {Lock into\\kiosk mode};
+  \node[lane] (l2) at (-2.8,-3.0) {Part 2\\IT};
 
   % --- Lane bands ---
   \begin{scope}[on background layer]
     \node[fill=weknowsky,rounded corners=4pt,inner sep=3.5mm,
           fit=(l1)(t1)(t4)] {};
     \node[fill=weknowgreyL,rounded corners=4pt,inner sep=3.5mm,
-          fit=(l2)(b1)(b2)] {};
+          fit=(l2)(b1)(b3)] {};
   \end{scope}
 
   \draw[arr] (t1) -- (t2);
   \draw[arr] (t2) -- (t3);
   \draw[arr] (t3) -- (t4);
   \draw[arr] (b1) -- (b2);
+  \draw[arr] (b2) -- (b3);
 
-  \draw[handoff] (t3.south) -- (b1.north);
-  \node[font=\scriptsize,text=weknowgreyN,anchor=west]
-       at ([xshift=2.5mm]$(t3.south)!0.5!(b1.north)$) {Kiosk ID + API key};
+  \draw[handoff] (t4.south) -- ++(0,-0.75) -| (b1.north);
+  \node[font=\scriptsize,text=weknowgreyN,anchor=south]
+       at ([yshift=-0.75cm]$(t4.south)!0.5!(t4.south -| b1.north)$) {Kiosk link};
 \end{tikzpicture}
-\caption{The Account Manager configures the kiosk and hands two credentials to IT, who install the app and lock the machine down.}
+\caption{The Account Manager configures the kiosk and sends IT its Command Centre link. IT take the Kiosk ID and a fresh API key from there, install the app and lock the machine down.}
 \end{figure}
 
 \begin{wkwarn}[The machine must be built first]
@@ -94,8 +114,9 @@ cleared until it is done.
 
 \begin{wkinfo}[Golden rules]
 \begin{itemize}
-  \item The \textbf{API key is shown once}. Copy it the moment you
-        generate it, or you will have to generate a new one.
+  \item The \textbf{API key is shown once}. IT generate it at the moment
+        of install and paste it straight into the install --- it is never
+        saved or sent anywhere. If it is lost, generate a new one.
   \item The \textbf{Kiosk ID} and the \textbf{Workstation ID} are
         different things --- see \S\ref{sec:ids}.
   \item Do not clear a prep check you have not actually verified. It is
@@ -111,7 +132,7 @@ cleared until it is done.
 %=====================================================================
 % 1  BEFORE YOU START
 %=====================================================================
-\wksection{Before you start}
+\wksection{Before you start}\label{sec:before}
 
 \subsection{Minimum information needed for a location}
 
@@ -322,11 +343,12 @@ up what you intended --- and to find the stale override when it is not.
 %=====================================================================
 % 3  PART 1 -- COMMAND CENTRE
 %=====================================================================
-\wkrolesection{Part 1 --- Command Centre}{Account Manager}
+\wkrolesection{Part 1 --- Command Centre}{Account Manager}\label{sec:part1}
 
-Done from any machine with a browser. You are creating the kiosk record,
-clearing its prep checks, collecting the two credentials IT will need, and
-scheduling the installation.
+Done from any machine with a browser. You are creating and configuring the
+kiosk record, clearing its prep checks, scheduling the installation, and
+sending IT a link to the kiosk. You do \textbf{not} generate the API key ---
+IT do that at install time.
 
 \subsection{Create the location and the kiosk}
 
@@ -408,45 +430,6 @@ Before clearing them, verify with IT that:
         running (Appendix~\ref{sec:fcc}).
 \end{itemize}
 
-\subsection{Collect the credentials for IT}
-
-\begin{enumerate}
-  \item On the kiosk's \textbf{Overview} tab, \textbf{copy the Kiosk ID}.
-\end{enumerate}
-
-\screenshot[0.48]{cc-kiosk-id}{Kiosk Overview --- copy the \textbf{Kiosk ID}.}
-
-\begin{enumerate}\setcounter{enumi}{1}
-  \item Switch to the \textbf{API keys} tab and select \textbf{Generate
-        API key}. This is the key the kiosk uses to authenticate to the
-        server.
-\end{enumerate}
-
-\screenshot[0.46]{cc-api-key}{Kiosk API keys. Generate the key here.}
-
-\begin{wkwarn}[Copy the API key now]
-The full key is displayed \textbf{only once, at creation}. Paste it into
-your own password manager, or straight into the PrivateBin paste you are
-about to send IT. \textbf{Never into the install ticket, a chat message
-or an email.} If you lose it, generate a new one; the old key cannot be
-recovered.
-\end{wkwarn}
-
-\begin{wkinfo}[Hand over to IT]
-Send IT four things: the \textbf{Kiosk ID}, the \textbf{API key}, the
-\textbf{Workstation ID} (\wpath{WKG-POS-XXX}), and the printer's COM port
-if it is not the standard \wpath{COM8}.
-
-Three of those may be sent directly. The \textbf{API key must be sent as
-a \href{https://privatebin.net/}{PrivateBin} paste set to burn after
-reading}, and by no other route. The ticket carries the link, never the
-key. Once the install is confirmed working, check the link is burned ---
-following it should return nothing.
-
-If PrivateBin is unreachable, do not generate the key yet. Generate it
-when a paste can be created; there is no alternative route.
-\end{wkinfo}
-
 \subsection{Create the installation record}
 
 The installation record ties the kiosk to its location and moves it out of
@@ -475,9 +458,20 @@ The installation record ties the kiosk to its location and moves it out of
 
 \screenshot[0.36]{cc-add-installation}{Add Installation --- links the kiosk to its location and records who is installing it.}
 
+\subsection{Send IT the kiosk link}\label{sec:handover}
+
+Open the kiosk in Command Centre and copy the page's address from the
+browser bar. Send it to IT in the install ticket or chat --- the link is
+\textbf{not sensitive} and needs no special handling. Everything IT need
+is on that page: the Kiosk ID, the Workstation ID (the kiosk's serial
+number), and the API keys tab.
+
+If the printer is on a port other than the standard \wpath{COM8}, say so
+in the same message.
+
 \begin{wkinfo}[Done when]
-The kiosk record exists with its prep checks cleared, the installation
-record is created, and IT have the Kiosk ID, API key and Workstation ID.
+The kiosk record exists and is configured, its prep checks are cleared,
+the installation record is created, and IT have the link to the kiosk.
 \end{wkinfo}
 
 %=====================================================================
@@ -485,8 +479,9 @@ record is created, and IT have the Kiosk ID, API key and Workstation ID.
 %=====================================================================
 \wkrolesection{Part 2 --- Install and lock the kiosk}{IT}\label{sec:part2}
 
-You need the Kiosk ID and API key from the Account Manager before you
-start.
+You need the link to the kiosk in Command Centre from the Account Manager,
+and a Command Centre account --- ask the WKG Technology team if you do not
+have one.
 
 \begin{wkwarn}[Build the machine first]
 If FreedomPay FCC is not yet installed and verified on this machine, do
@@ -507,6 +502,34 @@ Appendix~\ref{sec:fcc} first. It is done once per machine, signed in as
         installer there --- if several are present the script takes the
         highest version and warns about the rest.
 \end{enumerate}
+
+\subsection{Get the Kiosk ID and API key}\label{sec:getkeys}
+
+Do this \textbf{immediately before you install}, with the install script or
+command open and ready to paste into.
+
+\begin{enumerate}
+  \item Open the kiosk link from the Account Manager. On the
+        \textbf{Overview} tab, \textbf{copy the Kiosk ID}. The kiosk's
+        \textbf{serial number} is the Workstation ID.
+\end{enumerate}
+
+\screenshot[0.48]{cc-kiosk-id}{Kiosk Overview --- copy the \textbf{Kiosk ID}.}
+
+\begin{enumerate}\setcounter{enumi}{1}
+  \item Switch to the \textbf{API keys} tab and select \textbf{Generate
+        API key}. This is the key the kiosk uses to authenticate to the
+        server.
+\end{enumerate}
+
+\screenshot[0.46]{cc-api-key}{Kiosk API keys. Generate the key here.}
+
+\begin{wkwarn}[Use the API key straight away --- do not save it]
+The full key is displayed \textbf{only once, at creation}. Paste it
+directly into the install script or command. Do not save it anywhere or
+send it to anyone --- not the ticket, chat, email or a notes file. If you
+lose it before the install is done, simply generate a new one.
+\end{wkwarn}
 
 Then install using \textbf{one} of the two methods below. The N-central
 script is preferred: it validates the credentials, runs the install as
@@ -537,8 +560,10 @@ script is preferred: it validates the credentials, runs the install as
         Appendix~\ref{sec:script} into Notepad.
 
   \item Replace the three values at the top --- \wpath{\$KioskId},
-        \wpath{\$WorkstationId} and \wpath{\$ApiKey}. The script rejects
-        the placeholders, so it will not run until they are replaced.
+        \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- with the ones from
+        \S\ref{sec:getkeys}. The script rejects the placeholders, so it
+        will not run until they are replaced. Close Notepad without saving
+        once the script is pasted.
 
   \item Select all (\textbf{Ctrl+A}), copy (\textbf{Ctrl+C}), and paste
         the whole script into the N-central shell.
@@ -570,7 +595,7 @@ runs as.
   \item Open \textbf{PowerShell} in
         \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}
         and run the silent install, substituting the installer version and
-        your four values:
+        your values from \S\ref{sec:getkeys}:
 \end{enumerate}
 
 \begin{lstlisting}
@@ -588,10 +613,11 @@ runs as.
 \color{white}\textbf{Value}\\
 \wpath{/S} & Silent install --- no prompts. Always used.\\
 \rowcolor{weknowgreyL}
-\wpath{/KIOSKID} & The Kiosk ID from the Account Manager.\\
-\wpath{/WORKSTATIONID} & The machine label, e.g.\ \wpath{WKG-POS-617}.\\
+\wpath{/KIOSKID} & The Kiosk ID from the kiosk's Overview tab.\\
+\wpath{/WORKSTATIONID} & The machine label, e.g.\ \wpath{WKG-POS-617} ---
+the kiosk's serial number.\\
 \rowcolor{weknowgreyL}
-\wpath{/APIKEY} & The API key from the Account Manager.\\
+\wpath{/APIKEY} & The API key you just generated.\\
 \wpath{/PRINTER} & The printer's COM port. \wpath{COM8} on a standard
 build. If nothing prints, the port is wrong --- see
 \S\ref{sec:comport}.\\
@@ -650,7 +676,7 @@ no visible desktop, taskbar or file explorer.
 %=====================================================================
 % 4  FINAL CHECKLIST
 %=====================================================================
-\wksection{Final checklist}
+\wksection{Final checklist}\label{sec:checklist}
 
 Run through this before leaving site.
 
@@ -666,14 +692,15 @@ model.\\
 \emptybox & AM & Installation record created and linked to the location;
 kiosk no longer \emph{In Stock}.\\
 \rowcolor{weknowgreyL}
-\emptybox & AM & API key paste confirmed burned once the install is
-confirmed working.\\
+\emptybox & AM & Kiosk link sent to IT.\\
 \emptybox & IT & \wpath{kiosk-identity.json} present and correct.\\
 \rowcolor{weknowgreyL}
+\emptybox & IT & API key not saved anywhere --- Notepad closed without
+saving, nothing in the ticket or chat.\\
 \emptybox & IT & Machine reboots straight into the Kato app --- no
 desktop.\\
-\emptybox & IT & Printer prints, scanner scans, sensors respond.\\
 \rowcolor{weknowgreyL}
+\emptybox & IT & Printer prints, scanner scans, sensors respond.\\
 \emptybox & IT & Test payment taken on the PDQ and refunded.\\
 \end{tabularx}
 \end{center}
@@ -681,7 +708,7 @@ desktop.\\
 %=====================================================================
 % 5  TROUBLESHOOTING
 %=====================================================================
-\wksection{When things go wrong}
+\wksection{When things go wrong}\label{sec:trouble}
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
@@ -989,10 +1016,23 @@ changing anything else.
 
 
 %=====================================================================
-% APPENDIX B -- ONE-PAGE QUICK REFERENCE
+% APPENDIX B -- N-CENTRAL INSTALL SCRIPT
 %=====================================================================
 \clearpage
-\wksection{Quick reference}
+\wksection{The N-central install script}\label{sec:script}
+
+\wpath{Install-Kiosk.ps1}, for Part~2 Option~A (\S\ref{sec:ncentral}).
+Prefer the \textbf{Open Install-Kiosk.ps1} button there; this page is the
+fallback, and fits on one page so it copies in a single selection.
+
+% Blank lines hidden (emptylines=0) and a small size so it fits one page.
+\lstinputlisting[basicstyle=\ttfamily\fontsize{4.8}{5.1}\selectfont\color{weknowgraphite},breaklines=false,emptylines=0,aboveskip=4pt,belowskip=0pt]{scripts/Install-Kiosk.ps1}
+
+%=====================================================================
+% APPENDIX C -- ONE-PAGE QUICK REFERENCE
+%=====================================================================
+\clearpage
+\wksection{Quick reference}\label{sec:quickref}
 
 One page for someone who has done this before. Work down your column;
 the full detail is in the sections above.
@@ -1016,11 +1056,9 @@ the full detail is in the sections above.
   \item \emptybox\ Set the \textbf{Store ID} and \textbf{Terminal ID}.
   \item \emptybox\ Clear the prep checks --- only after IT confirm
         hardware and FreedomPay.
-  \item \emptybox\ Copy the \textbf{Kiosk ID} (Overview tab).
-  \item \emptybox\ Generate the \textbf{API key} --- shown once. Copy it
-        now.
-  \item \emptybox\ Send the four values to IT (below).
   \item \emptybox\ Create the \textbf{installation record}.
+  \item \emptybox\ Send IT the kiosk's Command Centre \textbf{link} ---
+        not sensitive. Mention the COM port if not \wpath{COM8}.
 \end{enumerate}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.475\textwidth}
@@ -1035,6 +1073,8 @@ the full detail is in the sections above.
   \item \emptybox\ Sign in to Windows as \wpath{SelfBooker}.
   \item \emptybox\ Copy the latest installer into
         \wpath{SelfBooker\textbackslash Documents}.
+  \item \emptybox\ From the kiosk link: copy the \textbf{Kiosk ID};
+        generate the \textbf{API key}. Use it at once --- never save it.
   \item \emptybox\ Run the N-central script, or the silent install below.
   \item \emptybox\ Check \wpath{kiosk-identity.json} --- IDs, API key, no
         trailing backtick, \wpath{api.} not \wpath{dev.} URLs.
@@ -1057,15 +1097,16 @@ the full detail is in the sections above.
 \begin{center}
 \renewcommand{\arraystretch}{1.2}\footnotesize
 \begin{tabularx}{\textwidth}{L{34mm} X}
-\rowcolor{weknownight}\color{white}\textbf{AM hands IT} &
-\color{white}\textbf{What it is}\\
-Kiosk ID & UUID from the kiosk Overview tab.\\
+\rowcolor{weknownight}\color{white}\textbf{Value} &
+\color{white}\textbf{Where IT get it}\\
+Kiosk link & From the AM, in the ticket or chat. Not sensitive.\\
 \rowcolor{weknowgreyL}
-API key & Generated on the API keys tab. Shown once. Send as a
-PrivateBin paste, burn after reading --- never in the ticket.\\
-Workstation ID & The machine label, \wpath{WKG-POS-XXX}.\\
+Kiosk ID & UUID on the kiosk's Overview tab.\\
+API key & Generated by IT on the API keys tab at install time. Shown once;
+paste straight in, never saved or sent.\\
 \rowcolor{weknowgreyL}
-Printer COM port & \wpath{COM8} unless the site differs.\\
+Workstation ID & The kiosk's serial number, \wpath{WKG-POS-XXX}.\\
+Printer COM port & \wpath{COM8} unless the AM says otherwise.\\
 \end{tabularx}
 \end{center}
 
@@ -1095,18 +1136,5 @@ List with \wpath{mode}, then \wpath{DIR > COM3} from Command Prompt.
 Fix in \wpath{kiosk-identity.json} --- no reinstall.\\
 \end{tabularx}
 \end{center}
-
-%=====================================================================
-% APPENDIX C -- N-CENTRAL INSTALL SCRIPT
-%=====================================================================
-\clearpage
-\wksection{The N-central install script}\label{sec:script}
-
-\wpath{Install-Kiosk.ps1}, for Part~2 Option~A (\S\ref{sec:ncentral}).
-Prefer the \textbf{Open Install-Kiosk.ps1} button there; this page is the
-fallback, and fits on one page so it copies in a single selection.
-
-% Blank lines hidden (emptylines=0) and a small size so it fits one page.
-\lstinputlisting[basicstyle=\ttfamily\fontsize{4.8}{5.1}\selectfont\color{weknowgraphite},breaklines=false,emptylines=0,aboveskip=4pt,belowskip=0pt]{scripts/Install-Kiosk.ps1}
 
 \end{document}
