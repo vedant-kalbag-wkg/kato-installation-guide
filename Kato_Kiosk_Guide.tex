@@ -1,16 +1,17 @@
 %=====================================================================
-%  We Know Group | Kato Kiosk Configuration Guide  (AM + IT)
-%  Command Centre setup, silent app install, kiosk lockdown.
+%  We Know Group | Kato Kiosk Guide  (AM + IT)
+%  Command Centre setup, silent app install, kiosk lockdown,
+%  and (Appendix A) the FreedomPay FCC machine build.
 %  Shared styling lives in wkg-preamble.tex.
 %=====================================================================
 \documentclass[a4paper,10pt]{article}
 \input{wkg-preamble}
-\renewcommand{\guidetitle}{Kato Kiosk Configuration Guide --- AM \& IT}
+\renewcommand{\guidetitle}{Kato Kiosk Guide --- AM \& IT}
 
 \begin{document}
 
-\makewkgcover{Kato:\\ Kiosk Configuration Guide}
-             {Configuring a kiosk for installation: \\Command Centre, App Install \& Lockdown}
+\makewkgcover{Kato:\\ Kiosk Installation \& Configuration Guide}
+             {Command Centre, Machine Build, \\App Install \& Lockdown}
              {Account Managers \& IT}
 
 %=====================================================================
@@ -19,8 +20,9 @@
 \section*{How to use this guide}
 \markright{How to use this guide}
 
-This guide covers \textbf{configuring a kiosk for a specific
-installation}. It has two parts, split by who does the work:
+This guide covers \textbf{installing and configuring a kiosk for a specific
+installation}, from building the machine to locking it down. It is split
+by who does the work:
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
@@ -34,6 +36,9 @@ clear the prep checks, and hand the Kiosk ID and API key to IT.\\
 \textbf{Part 2} & IT &
 Install the Kato app on the machine using those credentials, and lock the
 machine into kiosk mode.\\
+\textbf{Appendix A} & IT &
+Build the machine: install and verify FreedomPay FCC. Once per machine,
+before Part~2.\\
 \end{tabularx}
 \end{center}
 
@@ -80,11 +85,11 @@ machine into kiosk mode.\\
 \caption{The Account Manager configures the kiosk and hands two credentials to IT, who install the app and lock the machine down.}
 \end{figure}
 
-\begin{wkwarn}[The machine must already be built]
-This guide assumes FreedomPay FCC and the PAL packages are installed and
-verified on the machine. If that has not been done, work through the
-\emph{Kato Kiosk Setup Guide} first --- the prep checks in Part~1 cannot
-honestly be cleared until it is.
+\begin{wkwarn}[The machine must be built first]
+FreedomPay FCC and the PAL packages must be installed and verified on the
+machine before the kiosk goes live. IT do this once per machine using
+Appendix~\ref{sec:fcc} --- the prep checks in Part~1 cannot honestly be
+cleared until it is done.
 \end{wkwarn}
 
 \begin{wkinfo}[Golden rules]
@@ -385,7 +390,7 @@ Before clearing them, verify with IT that:
         sensors and scanners;
   \item FreedomPay has been installed, and the
         \wpath{FreewayClientService} and \wpath{FreewayServerService} are
-        running.
+        running (Appendix~\ref{sec:fcc}).
 \end{itemize}
 
 \subsection{Collect the credentials for IT}
@@ -455,11 +460,16 @@ record is created, and IT have the Kiosk ID, API key and Workstation ID.
 %=====================================================================
 % 3  PART 2 -- IT
 %=====================================================================
-\wkrolesection{Part 2 --- Install and lock the kiosk}{IT}
+\wkrolesection{Part 2 --- Install and lock the kiosk}{IT}\label{sec:part2}
 
 You need the Kiosk ID and API key from the Account Manager before you
-start. The machine must already be built per the \emph{Kato Kiosk Setup
-Guide}.
+start.
+
+\begin{wkwarn}[Build the machine first]
+If FreedomPay FCC is not yet installed and verified on this machine, do
+Appendix~\ref{sec:fcc} first. It is done once per machine, signed in as
+\wpath{WKGAdmin}.
+\end{wkwarn}
 
 \subsection{Get the installer onto the machine}
 
@@ -685,8 +695,8 @@ They are marked manually on the kiosk \textbf{Edit} tab --- they do not
 clear themselves when the underlying condition is met.\\
 \rowcolor{weknowgreyL}
 Payment fails on the test transaction &
-That is a machine-build issue, not a configuration one. See the
-\emph{Kato Kiosk Setup Guide}.\\
+That is a machine-build issue, not a configuration one. See
+Appendix~\ref{sec:fcc}, and its troubleshooting table.\\
 \end{tabularx}
 \end{center}
 
@@ -822,11 +832,143 @@ If the printer turned out to be on a non-standard port, put it in the
 engineer repeating this.
 \end{wkinfo}
 
-%=====================================================================
-% APPENDIX -- ONE-PAGE QUICK REFERENCE
-%=====================================================================
 \clearpage
 \appendix
+%=====================================================================
+% APPENDIX A -- BUILDING THE MACHINE (FreedomPay FCC)
+%=====================================================================
+\wkrolesection{Building the machine --- FreedomPay FCC}{IT}\label{sec:fcc}
+
+Installing FreedomPay Freeway Commerce Connect (FCC), applying the WeKnow
+configuration and PAL bundle, and confirming the card terminal works. Done
+\textbf{once per machine}, before Part~2.
+
+\subsection{What you need}
+
+Do everything in this appendix signed in as \wpath{WKGAdmin}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{44mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Item} &
+\color{white}\textbf{Where it comes from}\\
+FCC installer &
+Internal mirror: \wpath{https://dev.weknowlondon.uk/SSM/freedompay/}\\
+\rowcolor{weknowgreyL}
+UK config + PAL bundle &
+Same mirror.\\
+PDQ (card terminal) &
+Connected to the machine --- you cannot verify the build without it.\\
+\end{tabularx}
+\end{center}
+
+\subsection{Install FreedomPay FCC}
+
+Skip to \S\ref{sec:fccverify} if FCC is already installed on this machine and
+you only need to confirm it is healthy.
+
+\begin{enumerate}
+  \item Run \wpath{FreewayCommerceConnect.exe} as an admin user.
+
+  \item \textbf{Skip the activation step} of the Remote Update Service
+        (RUS).
+
+  \item Choose a \textbf{Custom} installation, ticking the features shown
+        below.
+\end{enumerate}
+
+\screenshot[0.50]{fcc-custom-features}{Custom Setup feature tree --- \textbf{Freeway POI Drivers} and \textbf{Freeway Server Service} ticked, everything else left clear.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{30mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Purpose} &
+\color{white}\textbf{Path}\\
+Binaries \& config &
+\wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect}\\
+\rowcolor{weknowgreyL}
+Logs &
+\wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash log}\\
+\end{tabularx}
+\end{center}
+
+\subsection{Apply the WeKnow configuration}
+
+\begin{enumerate}
+  \item Open the Registry Editor and \textbf{delete} the key\\
+        \wpath{HKEY\_LOCAL\_MACHINE\textbackslash SOFTWARE\textbackslash Freedompay\textbackslash Atlas\textbackslash PAL}
+
+  \item Copy the UK \wpath{config} and \wpath{PAL} folders into\\
+        \wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect}
+
+  \item Restart the services in this order:
+        \wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}
+\end{enumerate}
+
+\subsection{Verify the build}\label{sec:fccverify}
+
+Do not hand the machine on until all four checks below pass.
+
+\begin{enumerate}
+  \item In the Windows Services app, confirm both
+        \wpath{FreewayClientService} and \wpath{FreewayServerService}
+        show \textbf{Running}.
+
+  \item Open the newest log file in\\
+        \wpath{C:\textbackslash ProgramData\textbackslash FreedomPay\textbackslash Freeway Commerce Connect\textbackslash log}\\
+        and confirm the latest timestamp for \textbf{Lane Open}.
+
+  \item In the same log, confirm the regional configuration package
+        reached the terminal --- look for \emph{Successfully pushed}.
+\end{enumerate}
+
+\screenshot[0.94]{fcc-log-palpush}{\emph{Successfully pushed} --- the regional config package reached the terminal.}
+
+\begin{enumerate}\setcounter{enumi}{3}
+  \item Confirm the terminal accepted and wrote it --- look for a
+        \textbf{PalWriteSucceeded} event.
+\end{enumerate}
+
+\screenshot[0.94]{fcc-log-palwrite}{\emph{PalWriteSucceeded} --- the terminal accepted and wrote the package.}
+
+\begin{wkinfo}[Done when]
+Both services are running, and the log shows \textbf{Lane Open}, a
+successful package push and a \textbf{PalWriteSucceeded} at the latest
+timestamp. The machine is now ready for Part~2 (\S\ref{sec:part2}).
+\end{wkinfo}
+
+\subsection{When the build goes wrong}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{50mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Symptom} &
+\color{white}\textbf{First thing to try}\\
+No \emph{Lane Open} in the log &
+The terminal is not being detected. Check the cable, restart the client
+service, then power-cycle the terminal.\\
+\rowcolor{weknowgreyL}
+No \emph{Successfully pushed} or \emph{PalWriteSucceeded} &
+Confirm the \wpath{Atlas\textbackslash PAL} registry key was deleted
+\emph{before} the config and PAL folders were copied in, then restart the
+services in order (\wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}).\\
+Services will not stay running &
+A partially copied bundle or an unsupported version of FCC is the usual cause. Reinstall a known good version of FCC. Recopy the \wpath{config}
+and \wpath{PAL} folders and restart the services in order.\\
+\end{tabularx}
+\end{center}
+
+\begin{wkinfo}[Still stuck?]
+Zip the whole \wpath{log} folder, note the workstation serial and the
+terminal serial, and raise it with the WKG Technology team before
+changing anything else.
+\end{wkinfo}
+
+
+%=====================================================================
+% APPENDIX B -- ONE-PAGE QUICK REFERENCE
+%=====================================================================
+\clearpage
 \wksection{Quick reference}
 
 One page for someone who has done this before. Work down your column;
@@ -865,8 +1007,8 @@ the full detail is in the sections above.
 \vspace{4pt}
 \footnotesize
 \begin{enumerate}[leftmargin=6mm,itemsep=3pt]
-  \item \emptybox\ Confirm the machine is built --- see the
-        \emph{Kato Kiosk Setup Guide}.
+  \item \emptybox\ Confirm the machine is built --- FCC installed and
+        verified (Appendix~\ref{sec:fcc}).
   \item \emptybox\ Sign in to Windows as \wpath{SelfBooker}.
   \item \emptybox\ Copy the latest installer into
         \wpath{SelfBooker\textbackslash Documents}.

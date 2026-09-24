@@ -1,14 +1,14 @@
-# Kato Kiosk Guides
+# Kato Kiosk Guide
 
-Two internal step-by-step guides, split by who does the work.
+One internal step-by-step guide, `Kato_Kiosk_Guide.tex`, split by who does
+the work:
 
-| Document | Audience | Covers |
+| Section | Audience | Covers |
 |---|---|---|
-| `Kato_Kiosk_Setup_Guide.tex` | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Done once per machine. |
-| `Kato_Kiosk_Configuration_Guide.tex` | Account Managers & IT | Configuring a kiosk for an installation: Command Centre record and credentials (AM), then silent app install and kiosk lockdown (IT). |
-
-The setup guide comes first — a machine must be built and verified before
-its prep checks can be cleared in the configuration guide.
+| Part 1 | Account Managers | Command Centre: location, kiosk, prep checks, credentials, installation record. |
+| Part 2 | IT | Silent app install (N-central script or manual) and kiosk lockdown. |
+| Appendix A | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Once per machine, before Part 2. |
+| Appendix B | Both | One-page quick reference. |
 
 ## Build
 
@@ -16,21 +16,20 @@ Authored for **Overleaf** (or any full TeX Live install).
 
 - **Compiler:** pdfLaTeX
 - **Format:** A4
-- **Shared styling:** `wkg-preamble.tex` — both documents `\input` it, so
-  branding changes are made in one place.
+- **Shared styling:** `wkg-preamble.tex` — kept separate so branding changes
+  are made in one place.
 
-Each `.tex` produces its own PDF. On Overleaf, right-click a file and choose
-**Set as main document** to compile that guide, then switch to build the other.
-Set the compiler to *pdfLaTeX* in *Menu → Settings*.
+`Kato_Kiosk_Guide.tex` is the main document. On Overleaf, set the compiler to
+*pdfLaTeX* in *Menu → Settings*.
 
 All packages used (`inter`, `tcolorbox`, `tikz`, `listings`, `tabularx`,
-`lastpage`, …) ship with the standard Overleaf TeX Live distribution — no
+`lastpage`, `upquote`, `attachfile2`, …) ship with the standard Overleaf TeX Live distribution — no
 manual installation required.
 
 ## Sources
 
 The internal Obsidian notes **Installation Guide** and **Configuration Guide**
-are the sole sources of truth for these documents. Do not reintroduce content
+are the sole sources of truth for this guide. Do not reintroduce content
 from the FreedomPay certification guide — it is outdated.
 
 ## Assets
