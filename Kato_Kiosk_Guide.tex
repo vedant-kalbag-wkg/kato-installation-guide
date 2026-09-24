@@ -425,18 +425,26 @@ Before clearing them, verify with IT that:
 \screenshot[0.46]{cc-api-key}{Kiosk API keys. Generate the key here.}
 
 \begin{wkwarn}[Copy the API key now]
-The full key is displayed \textbf{only once, at creation}. Paste it
-somewhere safe --- your password manager or the install ticket --- until
-the installation is finished. If you lose it, generate a new one; the old
-key cannot be recovered.
+The full key is displayed \textbf{only once, at creation}. Paste it into
+your own password manager, or straight into the PrivateBin paste you are
+about to send IT. \textbf{Never into the install ticket, a chat message
+or an email.} If you lose it, generate a new one; the old key cannot be
+recovered.
 \end{wkwarn}
 
 \begin{wkinfo}[Hand over to IT]
 Send IT four things: the \textbf{Kiosk ID}, the \textbf{API key}, the
 \textbf{Workstation ID} (\wpath{WKG-POS-XXX}), and the printer's COM port
-if it is not the standard \wpath{COM8}. Send the API key by a private
-channel, and delete it from that channel once the install is confirmed
-working.
+if it is not the standard \wpath{COM8}.
+
+Three of those may be sent directly. The \textbf{API key must be sent as
+a \href{https://privatebin.net/}{PrivateBin} paste set to burn after
+reading}, and by no other route. The ticket carries the link, never the
+key. Once the install is confirmed working, check the link is burned ---
+following it should return nothing.
+
+If PrivateBin is unreachable, do not generate the key yet. Generate it
+when a paste can be created; there is no alternative route.
 \end{wkinfo}
 
 \subsection{Create the installation record}
@@ -658,8 +666,8 @@ model.\\
 \emptybox & AM & Installation record created and linked to the location;
 kiosk no longer \emph{In Stock}.\\
 \rowcolor{weknowgreyL}
-\emptybox & AM & API key deleted from the ticket / chat once the install
-is confirmed working.\\
+\emptybox & AM & API key paste confirmed burned once the install is
+confirmed working.\\
 \emptybox & IT & \wpath{kiosk-identity.json} present and correct.\\
 \rowcolor{weknowgreyL}
 \emptybox & IT & Machine reboots straight into the Kato app --- no
@@ -1053,7 +1061,8 @@ the full detail is in the sections above.
 \color{white}\textbf{What it is}\\
 Kiosk ID & UUID from the kiosk Overview tab.\\
 \rowcolor{weknowgreyL}
-API key & Generated on the API keys tab. Shown once.\\
+API key & Generated on the API keys tab. Shown once. Send as a
+PrivateBin paste, burn after reading --- never in the ticket.\\
 Workstation ID & The machine label, \wpath{WKG-POS-XXX}.\\
 \rowcolor{weknowgreyL}
 Printer COM port & \wpath{COM8} unless the site differs.\\
