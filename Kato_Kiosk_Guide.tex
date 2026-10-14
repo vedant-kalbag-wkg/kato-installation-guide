@@ -550,14 +550,16 @@ script is preferred: it validates the credentials, runs the install as
 \screenshot[0.94]{ncentral-powershell}{N-central System Shell. The PowerShell icon is the first of the three at the top right; the shell shows \textbf{Powershell} once switched.}
 
 \begin{enumerate}\setcounter{enumi}{2}
-  \item Click the button below. The script opens in Notepad.
+  \item Click the button below. The script opens on GitHub in your
+        browser (sign in if asked). Select \textbf{Copy raw file}, the copy
+        icon above the script, and paste it into Notepad or another
+        plain-text editor.
         \begin{center}
-        \textattachfile[mimetype=text/plain,color=1 1 1]{scripts/Install-Kiosk.txt}{%
+        \href{https://github.com/vedant-kalbag-wkg/kato-installation-guide/blob/main/scripts/Install-Kiosk.txt}{%
           \colorbox{weknowazure}{\color{white}\bfseries\strut\quad Open Install-Kiosk.txt\quad}}
         \end{center}
-        The button works in Adobe Acrobat/Reader (allow it if Acrobat asks)
-        and Microsoft Edge, not in Chrome's built-in viewer. Without it, copy the printed script in
-        Appendix~\ref{sec:script} into Notepad.
+        Without GitHub access, copy the printed script in
+        Appendix~\ref{sec:script} instead.
 
   \item Replace the three values at the top --- \wpath{\$KioskId},
         \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- with the ones from

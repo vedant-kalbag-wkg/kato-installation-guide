@@ -24,7 +24,7 @@ Authored for **Overleaf** (or any full TeX Live install).
 *pdfLaTeX* in *Menu → Settings*.
 
 All packages used (`inter`, `tcolorbox`, `tikz`, `listings`, `tabularx`,
-`lastpage`, `upquote`, `attachfile2`, …) ship with the standard Overleaf TeX Live distribution — no
+`lastpage`, `upquote`, …) ship with the standard Overleaf TeX Live distribution — no
 manual installation required.
 
 ## Sources
@@ -44,11 +44,12 @@ from the FreedomPay certification guide — it is outdated.
 - `images/ncentral-powershell.png` — N-central System Shell, for the one-run
   install script.
 - `scripts/Install-Kiosk.txt` — the N-central install script. The guide prints
-  it with `\lstinputlisting` and embeds it as a PDF attachment
-  (`attachfile2`), so edit the script here, never in the `.tex`. It is
-  PowerShell, but stays `.txt`: Acrobat refuses to open a `.ps1` attachment.
-  Keep it free of column alignment (runs of spaces) and backtick line
-  continuations, so a copy from the printed page still runs. Upload the
+  it with `\lstinputlisting` and the guide's
+  *Open Install-Kiosk.txt* button links to it on GitHub (`main`), so edit the script here, never in the `.tex`. It is
+  PowerShell, but stays `.txt` so browsers show it as plain text.
+  Keep it free of column alignment (runs of spaces), backtick line
+  continuations and strings like `', '`, so a copy from the printed page
+  (Acrobat or macOS Preview) still runs. Upload the
   `scripts/` folder to Overleaf alongside `images/`.
 
 ## Branding

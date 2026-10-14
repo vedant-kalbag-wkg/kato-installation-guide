@@ -53,7 +53,7 @@ try {
   Ok "Selected $($chosen.Name) (v$($chosen.Version))"
 
   if (@($candidates).Count -gt 1) {
-    $older = (@($candidates) | Select-Object -Skip 1 | ForEach-Object { $_.Name }) -join ', '
+    $older = (@($candidates) | Select-Object -Skip 1 | ForEach-Object { $_.Name }) -join ','
     Warn "$(@($candidates).Count) installers present. Ignoring: $older"
   }
 
