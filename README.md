@@ -8,8 +8,7 @@ the work:
 | Part 1 | Account Managers | Command Centre: location, kiosk, configuration, prep checks, installation record; send IT the kiosk's link. |
 | Part 2 | IT | Copy the Kiosk ID and generate the API key from that link (used at once, never saved), silent app install (N-central script or manual), kiosk lockdown. |
 | Appendix A | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Once per machine, before Part 2. |
-| Appendix B | IT | The N-central install script, printed on one page. |
-| Appendix C | Both | One-page quick reference. |
+| Appendix B | Both | One-page quick reference. |
 
 ## Build
 
@@ -43,14 +42,11 @@ from the FreedomPay certification guide — it is outdated.
 - `images/fcc-*.png` — FreedomPay FCC installer and log screenshots.
 - `images/ncentral-powershell.png` — N-central System Shell, for the one-run
   install script.
-- `scripts/Install-Kiosk.txt` — the N-central install script. The guide prints
-  it with `\lstinputlisting` and the guide's
-  *Open Install-Kiosk.txt* button links to it on GitHub (`main`), so edit the script here, never in the `.tex`. It is
-  PowerShell, but stays `.txt` so browsers show it as plain text.
-  Keep it free of column alignment (runs of spaces), backtick line
-  continuations and strings like `', '`, so a copy from the printed page
-  (Acrobat or macOS Preview) still runs. Upload the
-  `scripts/` folder to Overleaf alongside `images/`.
+- `scripts/Install-Kiosk.txt` — the N-central install script. The guide's
+  *Open Install-Kiosk.txt* button links to it on GitHub (`main`), so edit the
+  script here and push it; the link always serves the latest version. It is
+  PowerShell, but stays `.txt` so it opens in Notepad. The PDF
+  does not include it, so Overleaf does not need the `scripts/` folder.
 
 ## Branding
 

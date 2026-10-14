@@ -53,8 +53,6 @@ Appendix~\ref{sec:fcc} & IT &
 Building the machine: install and verify FreedomPay FCC. Once per machine,
 before Part~2.\\
 \rowcolor{weknowgreyL}
-Appendix~\ref{sec:script} & IT &
-The N-central install script, printed on one page.\\
 Appendix~\ref{sec:quickref} & Both &
 One-page quick reference for someone who has done this before.\\
 \end{tabularx}
@@ -551,21 +549,18 @@ script is preferred: it validates the credentials, runs the install as
 
 \begin{enumerate}\setcounter{enumi}{2}
   \item Click the button below. The script opens on GitHub in your
-        browser (sign in if asked). Select \textbf{Copy raw file}, the copy
-        icon above the script, and paste it into Notepad or another
-        plain-text editor.
+        browser (sign in if asked). Select \textbf{Download raw file}, the
+        download icon above the script, and open the downloaded
+        \wpath{Install-Kiosk.txt} in Notepad.
         \begin{center}
         \href{https://github.com/vedant-kalbag-wkg/kato-installation-guide/blob/main/scripts/Install-Kiosk.txt}{%
           \colorbox{weknowazure}{\color{white}\bfseries\strut\quad Open Install-Kiosk.txt\quad}}
         \end{center}
-        Without GitHub access, copy the printed script in
-        Appendix~\ref{sec:script} instead.
-
   \item Replace the three values at the top --- \wpath{\$KioskId},
         \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- with the ones from
         \S\ref{sec:getkeys}. The script rejects the placeholders, so it
         will not run until they are replaced. Close Notepad without saving
-        once the script is pasted.
+        once the script is copied.
 
   \item Select all (\textbf{Ctrl+A}), copy (\textbf{Ctrl+C}), and paste
         the whole script into the N-central shell.
@@ -1018,20 +1013,7 @@ changing anything else.
 
 
 %=====================================================================
-% APPENDIX B -- N-CENTRAL INSTALL SCRIPT
-%=====================================================================
-\clearpage
-\wksection{The N-central install script}\label{sec:script}
-
-\wpath{Install-Kiosk.txt}, for Part~2 Option~A (\S\ref{sec:ncentral}).
-Prefer the \textbf{Open Install-Kiosk.txt} button there; this page is the
-fallback, and fits on one page so it copies in a single selection.
-
-% Blank lines hidden (emptylines=0) and a small size so it fits one page.
-\lstinputlisting[basicstyle=\ttfamily\fontsize{4.8}{5.1}\selectfont\color{weknowgraphite},breaklines=false,emptylines=0,aboveskip=4pt,belowskip=0pt]{scripts/Install-Kiosk.txt}
-
-%=====================================================================
-% APPENDIX C -- ONE-PAGE QUICK REFERENCE
+% APPENDIX B -- ONE-PAGE QUICK REFERENCE
 %=====================================================================
 \clearpage
 \wksection{Quick reference}\label{sec:quickref}
