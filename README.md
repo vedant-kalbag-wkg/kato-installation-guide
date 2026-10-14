@@ -43,8 +43,10 @@ from the FreedomPay certification guide — it is outdated.
 - `images/ncentral-powershell.png` — N-central System Shell, for the one-run
   install script.
 - `scripts/Install-Kiosk.txt` — the N-central install script. The guide's
-  *Open Install-Kiosk.txt* button links to it on GitHub (`main`), so edit the
-  script here and push it; the link always serves the latest version. It is
+  *Download Install-Kiosk.txt* button downloads it from the `install-script`
+  GitHub release. On every push to `main` that changes it,
+  `.github/workflows/publish-install-script.yml` re-uploads it there, so edit
+  the script here and push; the link always serves the latest version. It is
   PowerShell, but stays `.txt` so it opens in Notepad. The PDF
   does not include it, so Overleaf does not need the `scripts/` folder.
 

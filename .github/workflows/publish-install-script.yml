@@ -1,0 +1,28 @@
+# Keeps the guide's "Download Install-Kiosk.txt" link serving the latest script:
+# releases/download/install-script/Install-Kiosk.txt
+name: Publish install script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/Install-Kiosk.txt
+      - .github/workflows/publish-install-script.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          gh release view install-script >/dev/null 2>&1 ||
+            gh release create install-script --title "N-central install script" \
+              --notes "Download link used by the Kato Kiosk Guide. Updated automatically from scripts/Install-Kiosk.txt on main." --latest=false
+          gh release upload install-script scripts/Install-Kiosk.txt --clobber
