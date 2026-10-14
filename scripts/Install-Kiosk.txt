@@ -4,20 +4,20 @@
   Picks the highest-versioned installer present in the folder.
 #>
 
-$TargetUser     = 'SelfBooker'
-$InstallerDir   = 'C:\Users\SelfBooker\Documents'
-$KioskId        = '{KIOSK_ID_FROM_COMMAND_CENTRE}'
-$WorkstationId  = '{WKG-POS-XXX}'
-$ApiKey         = '{API_KEY_FROM_COMMAND_CENTRE}'
-$RequireVersion = $null      # e.g. '1.1.1' to pin; $null accepts the newest found
+$TargetUser = 'SelfBooker'
+$InstallerDir = 'C:\Users\SelfBooker\Documents'
+$KioskId = '{KIOSK_ID_FROM_COMMAND_CENTRE}'
+$WorkstationId = '{WKG-POS-XXX}'
+$ApiKey = '{API_KEY_FROM_COMMAND_CENTRE}'
+$RequireVersion = $null # e.g. '1.1.1' to pin; $null accepts the newest found
 
 $ErrorActionPreference = 'Stop'
-$task  = 'KioskInstall'
+$task = 'KioskInstall'
 $start = Get-Date
 
-function Step($m) { Write-Host ("[{0,5:n1}s] {1}"       -f ((Get-Date)-$start).TotalSeconds, $m) }
-function Ok($m)   { Write-Host ("[{0,5:n1}s]   OK  {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Green }
-function Warn($m) { Write-Host ("[{0,5:n1}s]   !   {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Yellow }
+function Step($m) { Write-Host ("[{0,5:n1}s] {1}" -f ((Get-Date)-$start).TotalSeconds, $m) }
+function Ok($m) { Write-Host ("[{0,5:n1}s] OK {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Green }
+function Warn($m) { Write-Host ("[{0,5:n1}s] ! {1}" -f ((Get-Date)-$start).TotalSeconds, $m) -ForegroundColor Yellow }
 
 try {
   Write-Host ""
@@ -26,9 +26,9 @@ try {
 
   Step 'Validating parameters'
   $checks = @{
-    KioskId       = @($KioskId,       '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
+    KioskId = @($KioskId, '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
     WorkstationId = @($WorkstationId, '^[A-Za-z0-9][A-Za-z0-9-]{1,14}$')
-    ApiKey        = @($ApiKey,        '^kcs_[A-Za-z0-9_-]{24,}$')
+    ApiKey = @($ApiKey, '^kcs_[A-Za-z0-9_-]{24,}$')
   }
   foreach ($k in $checks.Keys) {
     $val, $pattern = $checks[$k]
@@ -48,9 +48,9 @@ try {
 
   if (-not $candidates) { throw "No Kiosk installer found in $InstallerDir" }
 
-  $chosen        = @($candidates)[0]
+  $chosen = @($candidates)[0]
   $InstallerPath = $chosen.Path
-  Ok "Selected $($chosen.Name)  (v$($chosen.Version))"
+  Ok "Selected $($chosen.Name) (v$($chosen.Version))"
 
   if (@($candidates).Count -gt 1) {
     $older = (@($candidates) | Select-Object -Skip 1 | ForEach-Object { $_.Name }) -join ', '
@@ -75,10 +75,9 @@ try {
   Step 'Registering scheduled task'
   $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey"
   Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
-  Register-ScheduledTask -TaskName $task `
-    -Action    (New-ScheduledTaskAction -Execute $InstallerPath -Argument $argLine) `
-    -Principal (New-ScheduledTaskPrincipal -UserId $TargetUser -LogonType Interactive -RunLevel Limited) `
-    -Force | Start-ScheduledTask
+  $action = New-ScheduledTaskAction -Execute $InstallerPath -Argument $argLine
+  $principal = New-ScheduledTaskPrincipal -UserId $TargetUser -LogonType Interactive -RunLevel Limited
+  Register-ScheduledTask -TaskName $task -Action $action -Principal $principal -Force | Start-ScheduledTask
   Ok 'Task registered and started'
 
   Step 'Waiting for installer to start (max 15s)'
@@ -114,7 +113,7 @@ try {
   Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
 
   Step 'Verifying install'
-  $exe  = "C:\Users\$TargetUser\AppData\Local\Programs\Kiosk\Kiosk.exe"
+  $exe = "C:\Users\$TargetUser\AppData\Local\Programs\Kiosk\Kiosk.exe"
   $json = "C:\Users\$TargetUser\AppData\Roaming\WKG Kiosk\kiosk-identity.json"
 
   if (-not (Test-Path -LiteralPath $exe)) { throw "Kiosk.exe missing at $exe" }
@@ -125,7 +124,7 @@ try {
 
   $cfg = Get-Content -LiteralPath $json -Raw | ConvertFrom-Json
   $bad = @()
-  if ($cfg.kioskId       -cne $KioskId)       { $bad += "kioskId='$($cfg.kioskId)'" }
+  if ($cfg.kioskId -cne $KioskId) { $bad += "kioskId='$($cfg.kioskId)'" }
   if ($cfg.workstationId -cne $WorkstationId) { $bad += "workstationId='$($cfg.workstationId)'" }
   if ($bad) { throw "Config mismatch: $($bad -join '; ')" }
 
@@ -133,7 +132,7 @@ try {
   Ok "Printer: $($cfg.printerDestination)"
 
   Write-Host ""
-  Write-Host ("=== SUCCESS in {0:n1}s  (v{1}) ===" -f ((Get-Date)-$start).TotalSeconds, $chosen.Version) -ForegroundColor Green
+  Write-Host ("=== SUCCESS in {0:n1}s (v{1}) ===" -f ((Get-Date)-$start).TotalSeconds, $chosen.Version) -ForegroundColor Green
   Write-Host ""
   exit 0
 }

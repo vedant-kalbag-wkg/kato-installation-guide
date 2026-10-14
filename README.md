@@ -43,9 +43,12 @@ from the FreedomPay certification guide — it is outdated.
 - `images/fcc-*.png` — FreedomPay FCC installer and log screenshots.
 - `images/ncentral-powershell.png` — N-central System Shell, for the one-run
   install script.
-- `scripts/Install-Kiosk.ps1` — the N-central install script. The guide prints
+- `scripts/Install-Kiosk.txt` — the N-central install script. The guide prints
   it with `\lstinputlisting` and embeds it as a PDF attachment
-  (`attachfile2`), so edit the script here, never in the `.tex`. Upload the
+  (`attachfile2`), so edit the script here, never in the `.tex`. It is
+  PowerShell, but stays `.txt`: Acrobat refuses to open a `.ps1` attachment.
+  Keep it free of column alignment (runs of spaces) and backtick line
+  continuations, so a copy from the printed page still runs. Upload the
   `scripts/` folder to Overleaf alongside `images/`.
 
 ## Branding
