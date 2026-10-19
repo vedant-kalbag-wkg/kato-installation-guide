@@ -237,20 +237,17 @@ try {
 
       Step 'Waiting for installer to start (max 15s)'
       $by = (Get-Date).AddSeconds(15)
-      do { Start-Sleep 1 }
-      while ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and (Get-Date) -lt $by)
-
-      $info = Get-ScheduledTask -TaskName $task | Get-ScheduledTaskInfo
-      if ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and $info.LastTaskResult -ne 0) {
-        throw ("Task did not start. LastTaskResult 0x{0:X}" -f $info.LastTaskResult)
+      while (($t = Get-ScheduledTask -TaskName $task).State -ne 'Running' -and (Get-Date) -lt $by) { Start-Sleep 1 }
+      if ($t.State -ne 'Running') { # not running: fine only if it already ran and finished
+        $result = ($t | Get-ScheduledTaskInfo).LastTaskResult
+        if ($result -ne 0) { throw ("Task did not start. LastTaskResult 0x{0:X}" -f $result) }
       }
       Ok 'Installer running'
 
       Step 'Waiting for task to complete (max 120s)'
       $by = (Get-Date).AddSeconds(120)
-      do { Start-Sleep 2 }
-      while ((Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $by)
-      if ((Get-ScheduledTask -TaskName $task).State -eq 'Running') { Warn 'Install task still running at timeout' }
+      while (($t = Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $by) { Start-Sleep 2 }
+      if ($t.State -eq 'Running') { Warn 'Install task still running at timeout' }
       else { Ok 'Task finished' }
 
       Step 'Waiting for setup process to exit (max 60s)'
@@ -265,12 +262,11 @@ try {
       } else {
         Ok 'Setup exited cleanly'
       }
-      Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     }
     finally {
       $password = $null
+      Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
       if ($granted) {
-        Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
         try { [WkgLsa]::Remove($sid, 'SeBatchLogonRight') } catch {}
         $still = try { [WkgLsa]::Has($sid, 'SeBatchLogonRight') } catch { $true }
         if ($still) {

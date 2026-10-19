@@ -85,8 +85,9 @@ try {
     $file = Get-Item -LiteralPath $target
     Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ($file.Length / 1KB))
 
-    $fileVer = $file.VersionInfo.ProductVersion
-    if ($fileVer -and ([version]$fileVer) -ne $build.Version) {
+    # only the x.y.z part: a label such as 1.2.0-beta.1 or a fourth part (1.2.0.0) is not a different version
+    $fileVer = "$($file.VersionInfo.ProductVersion)"
+    if ($fileVer -match '^\d+\.\d+\.\d+' -and [version]$Matches[0] -ne $build.Version) {
       Warn "latest.yml says v$($build.Version) but file metadata says v$fileVer"
     }
     $summary['Installer'] = "$target (v$($build.Version), sha512 verified)"

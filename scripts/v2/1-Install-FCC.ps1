@@ -8,7 +8,7 @@
        c. restart FreewayServerService, then FreewayClientService
     3. Verify the build: both services Running; the log shows Lane Open,
        Successfully pushed and PalWriteSucceeded
-  A rerun skips 2a, the PAL package and 3's log check if this region's package is
+  A rerun skips 2a, the PAL package (and its download) and 3's log check if this region's package is
   the last one run here, and restarts the services only if the config changed.
   Run as SYSTEM, with the PDQ plugged in. Next: 2-Download-App.txt
 #>
@@ -130,16 +130,13 @@ try {
   $server = $server.Name
   $client = $client.Name
 
-  Step "Downloading the $Region config and PAL package"
+  Step "Downloading the $Region config"
   $configDir = Join-Path $work 'config'
-  $pkg = Split-Path -Leaf $src.Pal
-  $palDir = Join-Path $work $pkg # local folder holding only the package
-  Remove-Item -LiteralPath $palDir -Recurse -Force -ErrorAction SilentlyContinue
   foreach ($f in $configFiles) { $null = Get-FccFile "$($src.Config)/$f" $configDir }
-  foreach ($f in $palFiles) { $null = Get-FccFile "$($src.Pal)/$f" $palDir }
 
   Step 'Checking which PAL package the terminal last took'
   # /reg:64 is the key Registry Editor shows, whatever the bitness of this shell
+  $pkg = Split-Path -Leaf $src.Pal
   $applied = foreach ($l in @(cmd /c "reg query `"$markKey`" /v PalPackage /reg:64 2>nul")) { if ($l -match '^\s*PalPackage\s+REG_SZ\s+(.+?)\s*$') { $Matches[1] } }
   $runPal = $applied -ne $pkg
   if ($runPal) { Ok $(if ($applied) { "$applied - updating to $pkg" } else { "none recorded - running $pkg" }) }
@@ -147,6 +144,11 @@ try {
 
   # --- 2a. Delete the PAL registry key -------------------------------------------
   if ($runPal) {
+    Step "Downloading the $Region PAL package"
+    $palDir = Join-Path $work $pkg # local folder holding only the package
+    Remove-Item -LiteralPath $palDir -Recurse -Force -ErrorAction SilentlyContinue
+    foreach ($f in $palFiles) { $null = Get-FccFile "$($src.Pal)/$f" $palDir }
+
     Step "Deleting HKEY_LOCAL_MACHINE\SOFTWARE\Freedompay\Atlas\PAL"
     cmd /c "reg query `"$palKey`" /reg:64 >nul 2>&1"
     if ($LASTEXITCODE -eq 0) {

@@ -32,7 +32,7 @@ $steps['1-Install-FCC'] = {
        c. restart FreewayServerService, then FreewayClientService
     3. Verify the build: both services Running; the log shows Lane Open,
        Successfully pushed and PalWriteSucceeded
-  A rerun skips 2a, the PAL package and 3's log check if this region's package is
+  A rerun skips 2a, the PAL package (and its download) and 3's log check if this region's package is
   the last one run here, and restarts the services only if the config changed.
   Run as SYSTEM, with the PDQ plugged in. Next: 2-Download-App.txt
 #>
@@ -154,16 +154,13 @@ try {
   $server = $server.Name
   $client = $client.Name
 
-  Step "Downloading the $Region config and PAL package"
+  Step "Downloading the $Region config"
   $configDir = Join-Path $work 'config'
-  $pkg = Split-Path -Leaf $src.Pal
-  $palDir = Join-Path $work $pkg # local folder holding only the package
-  Remove-Item -LiteralPath $palDir -Recurse -Force -ErrorAction SilentlyContinue
   foreach ($f in $configFiles) { $null = Get-FccFile "$($src.Config)/$f" $configDir }
-  foreach ($f in $palFiles) { $null = Get-FccFile "$($src.Pal)/$f" $palDir }
 
   Step 'Checking which PAL package the terminal last took'
   # /reg:64 is the key Registry Editor shows, whatever the bitness of this shell
+  $pkg = Split-Path -Leaf $src.Pal
   $applied = foreach ($l in @(cmd /c "reg query `"$markKey`" /v PalPackage /reg:64 2>nul")) { if ($l -match '^\s*PalPackage\s+REG_SZ\s+(.+?)\s*$') { $Matches[1] } }
   $runPal = $applied -ne $pkg
   if ($runPal) { Ok $(if ($applied) { "$applied - updating to $pkg" } else { "none recorded - running $pkg" }) }
@@ -171,6 +168,11 @@ try {
 
   # --- 2a. Delete the PAL registry key -------------------------------------------
   if ($runPal) {
+    Step "Downloading the $Region PAL package"
+    $palDir = Join-Path $work $pkg # local folder holding only the package
+    Remove-Item -LiteralPath $palDir -Recurse -Force -ErrorAction SilentlyContinue
+    foreach ($f in $palFiles) { $null = Get-FccFile "$($src.Pal)/$f" $palDir }
+
     Step "Deleting HKEY_LOCAL_MACHINE\SOFTWARE\Freedompay\Atlas\PAL"
     cmd /c "reg query `"$palKey`" /reg:64 >nul 2>&1"
     if ($LASTEXITCODE -eq 0) {
@@ -362,8 +364,9 @@ try {
     $file = Get-Item -LiteralPath $target
     Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ($file.Length / 1KB))
 
-    $fileVer = $file.VersionInfo.ProductVersion
-    if ($fileVer -and ([version]$fileVer) -ne $build.Version) {
+    # only the x.y.z part: a label such as 1.2.0-beta.1 or a fourth part (1.2.0.0) is not a different version
+    $fileVer = "$($file.VersionInfo.ProductVersion)"
+    if ($fileVer -match '^\d+\.\d+\.\d+' -and [version]$Matches[0] -ne $build.Version) {
       Warn "latest.yml says v$($build.Version) but file metadata says v$fileVer"
     }
     $summary['Installer'] = "$target (v$($build.Version), sha512 verified)"
@@ -627,20 +630,17 @@ try {
 
       Step 'Waiting for installer to start (max 15s)'
       $by = (Get-Date).AddSeconds(15)
-      do { Start-Sleep 1 }
-      while ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and (Get-Date) -lt $by)
-
-      $info = Get-ScheduledTask -TaskName $task | Get-ScheduledTaskInfo
-      if ((Get-ScheduledTask -TaskName $task).State -ne 'Running' -and $info.LastTaskResult -ne 0) {
-        throw ("Task did not start. LastTaskResult 0x{0:X}" -f $info.LastTaskResult)
+      while (($t = Get-ScheduledTask -TaskName $task).State -ne 'Running' -and (Get-Date) -lt $by) { Start-Sleep 1 }
+      if ($t.State -ne 'Running') { # not running: fine only if it already ran and finished
+        $result = ($t | Get-ScheduledTaskInfo).LastTaskResult
+        if ($result -ne 0) { throw ("Task did not start. LastTaskResult 0x{0:X}" -f $result) }
       }
       Ok 'Installer running'
 
       Step 'Waiting for task to complete (max 120s)'
       $by = (Get-Date).AddSeconds(120)
-      do { Start-Sleep 2 }
-      while ((Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $by)
-      if ((Get-ScheduledTask -TaskName $task).State -eq 'Running') { Warn 'Install task still running at timeout' }
+      while (($t = Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $by) { Start-Sleep 2 }
+      if ($t.State -eq 'Running') { Warn 'Install task still running at timeout' }
       else { Ok 'Task finished' }
 
       Step 'Waiting for setup process to exit (max 60s)'
@@ -655,12 +655,11 @@ try {
       } else {
         Ok 'Setup exited cleanly'
       }
-      Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     }
     finally {
       $password = $null
+      Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
       if ($granted) {
-        Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
         try { [WkgLsa]::Remove($sid, 'SeBatchLogonRight') } catch {}
         $still = try { [WkgLsa]::Has($sid, 'SeBatchLogonRight') } catch { $true }
         if ($still) {
