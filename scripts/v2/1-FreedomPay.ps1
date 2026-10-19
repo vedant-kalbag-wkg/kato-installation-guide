@@ -239,14 +239,14 @@ try {
   Show-Summary
   Write-Host "Next: 2-Kiosk-App.txt"
   Write-Host ""
-  exit 0
-}
-catch {
+  $exitCode = 0
+} catch { # on the same line as the }: pasted into PowerShell 5.1, a } alone on its line runs the try without it
   Write-Host ""
   Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
   Write-Host $_.Exception.Message -ForegroundColor Red
   $summary['Failed at'] = $script:current
   Show-Summary
   Write-Host ""
-  exit 1
+  $exitCode = 1
 }
+if ($PSCommandPath) { exit $exitCode } # run as a file (N-central script repository): report the result. Pasted, exit would close the window
