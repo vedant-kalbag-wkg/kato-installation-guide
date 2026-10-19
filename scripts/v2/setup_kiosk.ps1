@@ -266,17 +266,17 @@ try {
   Show-Summary
   Write-Host "Next: 2-Kiosk-App.txt"
   Write-Host ""
-  return 0
-}
-catch {
+  $exitCode = 0
+} catch { # on the same line as the }: pasted into PowerShell 5.1, a } alone on its line runs the try without it
   Write-Host ""
   Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
   Write-Host $_.Exception.Message -ForegroundColor Red
   $summary['Failed at'] = $script:current
   Show-Summary
   Write-Host ""
-  return 1
+  $exitCode = 1
 }
+$exitCode
 }
 $params['1-FreedomPay'] = 'Region', 'FccFeedUrl'
 
@@ -632,9 +632,8 @@ try {
   Show-Summary
   Write-Host "Next: 3-Shell-Lock.txt"
   Write-Host ""
-  return 0
-}
-catch {
+  $exitCode = 0
+} catch { # on the same line as the }: pasted into PowerShell 5.1, a } alone on its line runs the try without it
   Write-Host ""
   Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
   Write-Host $_.Exception.Message -ForegroundColor Red
@@ -642,8 +641,9 @@ catch {
   Show-Summary
   Write-Host ""
   Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
-  return 1
+  $exitCode = 1
 }
+$exitCode
 }
 $params['2-Kiosk-App'] = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion', 'ApiUrl', 'FleetUrl'
 
@@ -742,17 +742,17 @@ try {
   Show-Summary
   Write-Host "Next: confirm the Kato app comes up full screen as $TargetUser, then test print, scan and payment."
   Write-Host ""
-  return 0
-}
-catch {
+  $exitCode = 0
+} catch { # on the same line as the }: pasted into PowerShell 5.1, a } alone on its line runs the try without it
   Write-Host ""
   Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
   Write-Host $_.Exception.Message -ForegroundColor Red
   $summary['Failed at'] = $script:current
   Show-Summary
   Write-Host ""
-  return 1
+  $exitCode = 1
 }
+$exitCode
 }
 $params['3-Shell-Lock'] = 'TargetUser'
 
