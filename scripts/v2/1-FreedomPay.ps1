@@ -1,5 +1,5 @@
 <#
-  EXPERIMENTAL v2, step 1 of 4 - not yet in the guide.
+  EXPERIMENTAL v2, step 1 of 3 - not yet in the guide.
   Appendix A (Building the machine - FreedomPay FCC) for one region:
     1. Install FCC - skipped if its services already exist
     2. Apply the WeKnow configuration:
@@ -10,7 +10,7 @@
        Successfully pushed and PalWriteSucceeded
   A rerun skips 2a, the PAL package (and its download) and 3's log check if this region's package is
   the last one run here, and restarts the services only if the config changed.
-  Run as SYSTEM, with the PDQ plugged in. Next: 2-Download-App.txt
+  Run as SYSTEM, with the PDQ plugged in. Next: 2-Kiosk-App.txt
 #>
 
 $Region = '{UK|DE|ES|PT}'
@@ -70,7 +70,7 @@ function Get-LogTextSince($path, [long]$from) {
 }
 
 try {
-  $names ='Region', 'FccFeedUrl'
+  $names = 'Region', 'FccFeedUrl'
   for ($i = 0; $i -lt $args.Count; $i += 2) {
     $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
     if ($name -notin $names) { throw "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" }
@@ -237,7 +237,7 @@ try {
   Write-Host ""
   Write-Host ("=== SUCCESS in {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Green
   Show-Summary
-  Write-Host "Next: 2-Download-App.txt"
+  Write-Host "Next: 2-Kiosk-App.txt"
   Write-Host ""
   exit 0
 }

@@ -1,14 +1,16 @@
 <#
-  EXPERIMENTAL v2, step 3 of 4 - not yet in the guide.
-  Check the installer from step 2 is still the latest build in the feed, then
-  install it per-user into the target account via a scheduled task and verify
-  the installed version and identity file, then start Kato for 30s to prove it runs.
-  Skips the install if Kiosk.exe already reports the latest version and the
-  identity file already matches.
+  EXPERIMENTAL v2, step 2 of 3 - not yet in the guide.
+  Download the latest Kato app installer named in the update feed's latest.yml
+  into the installer folder (checked against the feed's sha512), install it
+  per-user into the target account via a scheduled task, verify the installed
+  version and identity file, then start Kato for 30s to prove it runs.
+  Skips the download and install if Kiosk.exe already reports the latest version
+  and the identity file already matches, and the download alone if the installer
+  folder already has the latest build.
   Run as SYSTEM. SelfBooker need not be signed in: if it isn't, the install runs
   as SelfBooker in the background, with the password the machine keeps for its
   automatic sign-in, and the 30s start check is skipped.
-  Next: 4-Lockdown.txt
+  Next: 3-Shell-Lock.txt
 #>
 
 $TargetUser = 'SelfBooker'
@@ -17,10 +19,12 @@ $KioskId = '{KIOSK_ID_FROM_COMMAND_CENTRE}'
 $WorkstationId = $env:COMPUTERNAME # the machine label, e.g. WKG-POS-617
 $ApiKey = '{API_KEY_FROM_COMMAND_CENTRE}'
 $KioskFeedUrl = 'https://wkgdevstore.blob.core.windows.net/kiosk/' # electron-builder update feed
+$RequireVersion = $null # e.g. '1.1.1' to refuse anything else; $null accepts whatever latest.yml names
 # From the N-central repository, pass any of these as command-line
 # parameters instead: -KioskId <id> -ApiKey <key>
 
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue' # the progress bar slows large downloads badly on PowerShell 5.1
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $task = 'KioskInstall'
 $start = Get-Date
@@ -128,7 +132,7 @@ public static class WkgLsa {
 }
 
 try {
-  $names = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl'
+  $names = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion'
   for ($i = 0; $i -lt $args.Count; $i += 2) {
     $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
     if ($name -notin $names) { throw "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" }
@@ -136,7 +140,7 @@ try {
   }
 
   Write-Host ""
-  Write-Host "=== WKG Kiosk v2 step 3 - install the app on $WorkstationId ==="
+  Write-Host "=== WKG Kiosk v2 step 2 - Kiosk App on $WorkstationId ==="
   Write-Host ""
 
   Step 'Validating parameters'
@@ -161,6 +165,9 @@ try {
   else { Ok "User present, not signed in - installing as $TargetUser in the background" }
 
   $build = Get-LatestBuild $KioskFeedUrl
+  if ($RequireVersion -and $build.Version -ne [version]$RequireVersion) {
+    throw "Expected v$RequireVersion, feed has v$($build.Version)"
+  }
   $exe = "C:\Users\$TargetUser\AppData\Local\Programs\Kiosk\Kiosk.exe"
   $json = "C:\Users\$TargetUser\AppData\Roaming\WKG Kiosk\kiosk-identity.json"
   # the version Kiosk.exe itself reports (its file properties), e.g. 1.1.1; $null if not installed
@@ -191,14 +198,33 @@ try {
   if ($upToDate) {
     $summary['Installer'] = 'not needed - the latest version is already installed'
   } else {
-    Step "Checking $InstallerDir has the latest build"
+    Step "Checking $InstallerDir for the latest build"
     $InstallerPath = Join-Path $InstallerDir $build.Name
-    if (-not (Test-Path -LiteralPath $InstallerPath)) { throw "$($build.Name) not found in $InstallerDir - run step 2 first" }
-    if ((Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA512).Hash -ne $build.Sha512) {
-      throw "$($build.Name) does not match the sha512 in latest.yml - run step 2 again"
+    if ((Test-Path -LiteralPath $InstallerPath) -and (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA512).Hash -eq $build.Sha512) {
+      Ok "$($build.Name) already downloaded, sha512 matches latest.yml - not downloading again"
+      $summary['Installer'] = "$InstallerPath (v$($build.Version), already present, sha512 verified)"
+    } else {
+      Step 'Downloading Kato app installer'
+      New-Item -ItemType Directory -Force -Path $InstallerDir | Out-Null
+      # a part-download left by an earlier run can still be held open (e.g. by antivirus), so never reuse one
+      Get-ChildItem -LiteralPath $InstallerDir -Filter "$($build.Name).*download" -File | Remove-Item -Force -ErrorAction SilentlyContinue
+      $partial = "$InstallerPath.$([guid]::NewGuid().ToString('N').Substring(0, 8)).download"
+      Invoke-WebRequest -Uri $build.Url -OutFile $partial -UseBasicParsing
+      if ((Get-FileHash -LiteralPath $partial -Algorithm SHA512).Hash -ne $build.Sha512) {
+        Remove-Item -LiteralPath $partial -Force
+        throw 'Downloaded installer does not match the sha512 in latest.yml'
+      }
+      Move-Item -LiteralPath $partial -Destination $InstallerPath -Force
+      $file = Get-Item -LiteralPath $InstallerPath
+      Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ($file.Length / 1KB))
+
+      # only the x.y.z part: a label such as 1.2.0-beta.1 or a fourth part (1.2.0.0) is not a different version
+      $fileVer = "$($file.VersionInfo.ProductVersion)"
+      if ($fileVer -match '^\d+\.\d+\.\d+' -and [version]$Matches[0] -ne $build.Version) {
+        Warn "latest.yml says v$($build.Version) but file metadata says v$fileVer"
+      }
+      $summary['Installer'] = "$InstallerPath (v$($build.Version), sha512 verified)"
     }
-    $summary['Installer'] = "$($build.Name) (v$($build.Version), latest, sha512 verified)"
-    Ok 'Installer is the latest build'
 
     Step 'Registering scheduled task'
     $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey"
@@ -290,8 +316,8 @@ try {
   Ok 'Identity file matches'
 
   if (-not $signedIn) {
-    # Kato needs a desktop to show on; step 4's restart signs SelfBooker in and starts it
-    $summary['Launch'] = "not checked - $TargetUser was not signed in; the restart in step 4 starts Kato"
+    # Kato needs a desktop to show on; step 3's restart signs SelfBooker in and starts it
+    $summary['Launch'] = "not checked - $TargetUser was not signed in; the restart in step 3 starts Kato"
   } else {
     Step "Starting Kato as $TargetUser (30s)"
     # a bad config (e.g. wrong API endpoints) installs fine but Kato closes straight away
@@ -303,7 +329,7 @@ try {
       Register-ScheduledTask -TaskName $task -Action (New-ScheduledTaskAction -Execute $exe) -Principal $principal -Force -ErrorAction Stop | Start-ScheduledTask -ErrorAction Stop
       Start-Sleep 30
       $kato = Get-Kato
-      $kato | Stop-Process -Force # step 4's lockdown starts it for real
+      $kato | Stop-Process -Force # step 3's shell lock starts it for real
       Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     }
     if (-not $kato) { throw "Kato closed within 30s of starting - check its config and $json" }
@@ -314,7 +340,7 @@ try {
   Write-Host ""
   Write-Host ("=== SUCCESS in {0:n1}s (v{1}) ===" -f ((Get-Date)-$start).TotalSeconds, $build.Version) -ForegroundColor Green
   Show-Summary
-  Write-Host "Next: 4-Lockdown.txt"
+  Write-Host "Next: 3-Shell-Lock.txt"
   Write-Host ""
   exit 0
 }
