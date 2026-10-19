@@ -1,0 +1,105 @@
+<#
+  EXPERIMENTAL v2, step 3 of 3 - not yet in the guide.
+  Lock the machine into kiosk mode: Shell Launcher runs Kiosk.exe as the
+  target account's shell. Scripted equivalent of SLUtility's Disable User
+  Shell, Set User Shell (Action 3), Enable Shell Launcher.
+  Run as SYSTEM, after step 2. Ends by restarting the machine (15s) into Kato.
+  Changes nothing if the shell is already set, and skips the restart if Kato
+  is also already running as the target account.
+#>
+
+$TargetUser = 'SelfBooker'
+
+$ErrorActionPreference = 'Stop'
+$start = Get-Date
+$summary = [ordered]@{}
+$script:current = ''
+
+function Stamp { "[{0,5:n1}s]" -f ((Get-Date)-$start).TotalSeconds }
+function Step($m) { $script:current = $m; Write-Host "$(Stamp) $m" }
+function Ok($m) { Write-Host "$(Stamp) OK $m" -ForegroundColor Green }
+function Show-Summary {
+  Write-Host 'Summary:'
+  foreach ($k in $summary.Keys) { Write-Host ("  {0,-12} {1}" -f $k, $summary[$k]) }
+}
+
+try {
+  $names = 'TargetUser'
+  for ($i = 0; $i -lt $args.Count; $i += 2) {
+    $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
+    if ($name -notin $names) { throw "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" }
+    Set-Variable -Name $name -Value "$($args[$i + 1])"
+  }
+
+  Write-Host ""
+  Write-Host "=== WKG Kiosk v2 step 3 - shell lock on $env:COMPUTERNAME ==="
+  Write-Host ""
+
+  Step "Checking $TargetUser and the Kato app"
+  $user = Get-LocalUser -Name $TargetUser -ErrorAction SilentlyContinue
+  if (-not $user) { throw "No local user '$TargetUser'" }
+  $exe = "C:\Users\$TargetUser\AppData\Local\Programs\Kiosk\Kiosk.exe"
+  if (-not (Test-Path -LiteralPath $exe)) { throw "Kiosk.exe missing at $exe - run step 2 first" }
+  Ok 'User and Kiosk.exe present'
+
+  Step 'Checking the Shell Launcher feature'
+  $feature = Get-WindowsOptionalFeature -Online -FeatureName Client-EmbeddedShellLauncher
+  if ($feature.State -ne 'Enabled') {
+    throw "Shell Launcher feature is '$($feature.State)', not Enabled. Lock the machine with SLUtility instead"
+  }
+  Ok 'Feature enabled'
+
+  Step "Checking $TargetUser's shell"
+  $sl = @{ Namespace = 'root\standardcimv2\embedded'; ClassName = 'WESL_UserSetting' }
+  $sid = $user.SID.Value
+  $set = Get-CimInstance @sl | Where-Object Sid -eq $sid
+  $locked = $set.Shell -eq $exe -and $set.DefaultAction -eq 3 -and (Invoke-CimMethod @sl -MethodName IsEnabled).Enabled
+  if ($locked) {
+    Ok 'Already Kiosk.exe (action 3) with Shell Launcher on - not changed'
+  } else {
+    Step "Setting $TargetUser's shell to Kiosk.exe"
+    try { Invoke-CimMethod @sl -MethodName RemoveCustomShell -Arguments @{ Sid = $sid } | Out-Null } catch {} # none set yet
+    Invoke-CimMethod @sl -MethodName SetCustomShell -Arguments @{ Sid = $sid; Shell = $exe; DefaultAction = [int]3 } | Out-Null
+    Invoke-CimMethod @sl -MethodName SetEnabled -Arguments @{ Enabled = $true } | Out-Null
+  }
+
+  Step 'Verifying'
+  $set = Get-CimInstance @sl | Where-Object Sid -eq $sid
+  if ($set.Shell -ne $exe) { throw "Shell for $TargetUser is '$($set.Shell)', expected $exe" }
+  if (-not (Invoke-CimMethod @sl -MethodName IsEnabled).Enabled) { throw 'Shell Launcher did not enable' }
+  $summary['Lockdown'] = "Shell Launcher on; $TargetUser shell is Kiosk.exe (action 3)$(if ($locked) { ', already - not changed' })"
+  Ok 'Shell Launcher on'
+
+  # The new shell applies at sign-in. The guide's check is a reboot straight into Kato,
+  # which needs Windows to sign SelfBooker in automatically.
+  $kato = Get-Process -Name Kiosk -IncludeUserName -ErrorAction SilentlyContinue | Where-Object UserName -like "*\$TargetUser"
+  if ($locked -and $kato) {
+    $summary['Restart'] = "not needed - already locked down and Kato is running as $TargetUser"
+    Ok $summary['Restart']
+  } else {
+    Step 'Restarting into Kato in 15s'
+    $winlogon = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+    $autoSignIn = "$($winlogon.AutoAdminLogon)" -eq '1' -and $winlogon.DefaultUserName -eq $TargetUser
+    shutdown.exe /r /t 15 /c "Kiosk locked down - restarting into Kato"
+    $summary['Restart'] = if ($LASTEXITCODE -ne 0) { "could not be scheduled (shutdown exit $LASTEXITCODE) - restart the machine yourself" }
+      elseif ($autoSignIn) { "in 15s - $TargetUser signs in automatically and Kato opens" }
+      else { "in 15s - automatic sign-in is not set up for $TargetUser, so sign in as $TargetUser and Kato opens" }
+    Ok $summary['Restart']
+  }
+
+  Write-Host ""
+  Write-Host ("=== SUCCESS in {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Green
+  Show-Summary
+  Write-Host "Next: confirm the Kato app comes up full screen as $TargetUser, then test print, scan and payment."
+  Write-Host ""
+  exit 0
+}
+catch {
+  Write-Host ""
+  Write-Host ("=== FAILED after {0:n1}s ===" -f ((Get-Date)-$start).TotalSeconds) -ForegroundColor Red
+  Write-Host $_.Exception.Message -ForegroundColor Red
+  $summary['Failed at'] = $script:current
+  Show-Summary
+  Write-Host ""
+  exit 1
+}
