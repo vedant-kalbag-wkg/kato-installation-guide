@@ -2,7 +2,8 @@
   EXPERIMENTAL v2, step 3 of 3 - not yet in the guide.
   Lock the machine into kiosk mode: Shell Launcher runs Kiosk.exe as the
   target account's shell. Scripted equivalent of SLUtility's Disable User
-  Shell, Set User Shell (Action 3), Enable Shell Launcher.
+  Shell, Set User Shell (Action 3), Enable Shell Launcher. Turns the Windows
+  Shell Launcher feature on first if it is off.
   Run as SYSTEM, after step 2. Ends by restarting the machine (15s) into Kato.
   Changes nothing if the shell is already set, and skips the restart if Kato
   is also already running as the target account.
@@ -44,15 +45,22 @@ try {
 
   Step 'Checking the Shell Launcher feature'
   $feature = Get-WindowsOptionalFeature -Online -FeatureName Client-EmbeddedShellLauncher
-  if ($feature.State -ne 'Enabled') {
-    throw "Shell Launcher feature is '$($feature.State)', not Enabled. Lock the machine with SLUtility instead"
+  $turnedOn = $null # pasted reruns share variables: never keep an earlier run's result
+  if ($feature.State -eq 'Enabled') {
+    Ok 'Feature enabled'
+  } else {
+    Step "Turning on the Shell Launcher feature (was '$($feature.State)')"
+    $turnedOn = Enable-WindowsOptionalFeature -Online -FeatureName Client-EmbeddedShellLauncher -All -NoRestart
+    Ok "Feature turned on$(if ($turnedOn.RestartNeeded) { ' - Windows wants a restart' })"
   }
-  Ok 'Feature enabled'
 
   Step "Checking $TargetUser's shell"
   $sl = @{ Namespace = 'root\standardcimv2\embedded'; ClassName = 'WESL_UserSetting' }
   $sid = $user.SID.Value
-  $set = Get-CimInstance @sl | Where-Object Sid -eq $sid
+  try { $set = Get-CimInstance @sl | Where-Object Sid -eq $sid } catch {
+    if (-not $turnedOn.RestartNeeded) { throw }
+    throw "Shell Launcher was just turned on and needs a restart before it can be set. Restart the machine, then run step 3 again"
+  }
   $locked = $set.Shell -eq $exe -and $set.DefaultAction -eq 3 -and (Invoke-CimMethod @sl -MethodName IsEnabled).Enabled
   if ($locked) {
     Ok 'Already Kiosk.exe (action 3) with Shell Launcher on - not changed'
