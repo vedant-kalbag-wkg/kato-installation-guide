@@ -18,6 +18,8 @@ $TargetUser = 'SelfBooker'
 $InstallerDir = "C:\Users\$TargetUser\Documents"
 $KioskFeedUrl = 'https://wkgdevstore.blob.core.windows.net/kiosk/' # Kato app update feed
 $FccFeedUrl = "${KioskFeedUrl}FCC/" # FCC installer, configs and PAL packages
+$ApiUrl = 'https://api.weknow.technology/api' # Kato's API and fleet endpoints, given to the installer for now
+$FleetUrl = 'wss://api.weknow.technology'
 
 $start = Get-Date
 $steps = [ordered]@{}
@@ -301,6 +303,9 @@ $WorkstationId = $env:COMPUTERNAME # the machine label, e.g. WKG-POS-617
 $ApiKey = '{API_KEY_FROM_COMMAND_CENTRE}'
 $KioskFeedUrl = 'https://wkgdevstore.blob.core.windows.net/kiosk/' # electron-builder update feed
 $RequireVersion = $null # e.g. '1.1.1' to refuse anything else; $null accepts whatever latest.yml names
+# the endpoints Kato talks to, given to the installer for now (/APIURL, /FLEETURL); kept as apiBaseUrl and fleetSocketUrl
+$ApiUrl = 'https://api.weknow.technology/api'
+$FleetUrl = 'wss://api.weknow.technology'
 # From the N-central repository, pass any of these as command-line
 # parameters instead: -KioskId <id> -ApiKey <key>
 
@@ -413,7 +418,7 @@ public static class WkgLsa {
 }
 
 try {
-  $names = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion'
+  $names = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion', 'ApiUrl', 'FleetUrl'
   for ($i = 0; $i -lt $args.Count; $i += 2) {
     $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
     if ($name -notin $names) { throw "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" }
@@ -430,6 +435,8 @@ try {
     WorkstationId = @($WorkstationId, '^[A-Za-z0-9][A-Za-z0-9-]{1,14}$')
     ApiKey = @($ApiKey, '^kcs_[A-Za-z0-9_-]{24,}$')
     KioskFeedUrl = @($KioskFeedUrl, '^https://\S+$')
+    ApiUrl = @($ApiUrl, '^https://\S+$')
+    FleetUrl = @($FleetUrl, '^wss://\S+$')
   }
   foreach ($k in $checks.Keys) {
     $val, $pattern = $checks[$k]
@@ -463,6 +470,8 @@ try {
     if ($cfg.kioskId -cne $KioskId) { "kioskId='$($cfg.kioskId)'" }
     if ($cfg.workstationId -cne $WorkstationId) { "workstationId='$($cfg.workstationId)'" }
     if ($null -ne $cfg.apiKey -and $cfg.apiKey -cne $ApiKey) { 'a different API key' }
+    if ($null -ne $cfg.apiBaseUrl -and $cfg.apiBaseUrl -ne $ApiUrl) { "apiBaseUrl='$($cfg.apiBaseUrl)'" }
+    if ($null -ne $cfg.fleetSocketUrl -and $cfg.fleetSocketUrl -ne $FleetUrl) { "fleetSocketUrl='$($cfg.fleetSocketUrl)'" }
   }
 
   Step 'Checking the installed app'
@@ -508,7 +517,7 @@ try {
     }
 
     Step 'Registering scheduled task'
-    $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey"
+    $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey /APIURL=$ApiUrl /FLEETURL=$FleetUrl"
     Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     $action = New-ScheduledTaskAction -Execute $InstallerPath -Argument $argLine
     $granted = $false
@@ -636,7 +645,7 @@ catch {
   return 1
 }
 }
-$params['2-Kiosk-App'] = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion'
+$params['2-Kiosk-App'] = 'TargetUser', 'InstallerDir', 'KioskId', 'ApiKey', 'KioskFeedUrl', 'RequireVersion', 'ApiUrl', 'FleetUrl'
 
 $steps['3-Shell-Lock'] = {
 <#
@@ -749,7 +758,7 @@ $params['3-Shell-Lock'] = 'TargetUser'
 
 # returns 0 or 1 instead of exiting: exit in a pasted script closes the PowerShell window
 $result = & {
-  $names = 'Region', 'KioskId', 'ApiKey', 'TargetUser', 'InstallerDir', 'KioskFeedUrl', 'FccFeedUrl'
+  $names = 'Region', 'KioskId', 'ApiKey', 'TargetUser', 'InstallerDir', 'KioskFeedUrl', 'FccFeedUrl', 'ApiUrl', 'FleetUrl'
   for ($i = 0; $i -lt $args.Count; $i += 2) {
     $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
     if ($name -notin $names) { Write-Host "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" -ForegroundColor Red; return 1 }
