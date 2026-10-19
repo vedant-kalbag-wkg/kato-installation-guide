@@ -303,7 +303,8 @@ $WorkstationId = $env:COMPUTERNAME # the machine label, e.g. WKG-POS-617
 $ApiKey = '{API_KEY_FROM_COMMAND_CENTRE}'
 $KioskFeedUrl = 'https://wkgdevstore.blob.core.windows.net/kiosk/' # electron-builder update feed
 $RequireVersion = $null # e.g. '1.1.1' to refuse anything else; $null accepts whatever latest.yml names
-# the endpoints Kato talks to, given to the installer for now (/APIURL, /FLEETURL); kept as apiBaseUrl and fleetSocketUrl
+# the endpoints Kato talks to, given to the installer for now (/APIURL, /FLEETURL). Kato reads them from its
+# identity file as apiBaseUrl and fleetSocketUrl; step 2 sets them there too if the installer doesn't
 $ApiUrl = 'https://api.weknow.technology/api'
 $FleetUrl = 'wss://api.weknow.technology'
 # From the N-central repository, pass any of these as command-line
@@ -435,8 +436,8 @@ try {
     WorkstationId = @($WorkstationId, '^[A-Za-z0-9][A-Za-z0-9-]{1,14}$')
     ApiKey = @($ApiKey, '^kcs_[A-Za-z0-9_-]{24,}$')
     KioskFeedUrl = @($KioskFeedUrl, '^https://\S+$')
-    ApiUrl = @($ApiUrl, '^https://\S+$')
-    FleetUrl = @($FleetUrl, '^wss://\S+$')
+    ApiUrl = @($ApiUrl, '^https://[^\s"\\]+$')
+    FleetUrl = @($FleetUrl, '^wss://[^\s"\\]+$')
   }
   foreach ($k in $checks.Keys) {
     $val, $pattern = $checks[$k]
@@ -470,8 +471,15 @@ try {
     if ($cfg.kioskId -cne $KioskId) { "kioskId='$($cfg.kioskId)'" }
     if ($cfg.workstationId -cne $WorkstationId) { "workstationId='$($cfg.workstationId)'" }
     if ($null -ne $cfg.apiKey -and $cfg.apiKey -cne $ApiKey) { 'a different API key' }
-    if ($null -ne $cfg.apiBaseUrl -and $cfg.apiBaseUrl -ne $ApiUrl) { "apiBaseUrl='$($cfg.apiBaseUrl)'" }
-    if ($null -ne $cfg.fleetSocketUrl -and $cfg.fleetSocketUrl -ne $FleetUrl) { "fleetSocketUrl='$($cfg.fleetSocketUrl)'" }
+  }
+  # the endpoints in the identity file that are not this run's (missing ones too: Kato would use its built-in dev.*)
+  $endpoints = [ordered]@{ apiBaseUrl = $ApiUrl; fleetSocketUrl = $FleetUrl }
+  function Get-EndpointMismatch {
+    if (-not (Test-Path -LiteralPath $json)) { return }
+    $cfg = Get-Content -LiteralPath $json -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($k in $endpoints.Keys) {
+      if ($null -eq $cfg.$k) { "$k missing" } elseif ($cfg.$k -ne $endpoints[$k]) { "$k='$($cfg.$k)'" }
+    }
   }
 
   Step 'Checking the installed app'
@@ -517,7 +525,8 @@ try {
     }
 
     Step 'Registering scheduled task'
-    $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey /APIURL=$ApiUrl /FLEETURL=$FleetUrl"
+    # quoted: unquoted, the installer cuts a value at its first / (it took https://... as https:)
+    $argLine = "/S /KIOSKID=$KioskId /WORKSTATIONID=$WorkstationId /APIKEY=$ApiKey /APIURL=`"$ApiUrl`" /FLEETURL=`"$FleetUrl`""
     Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     $action = New-ScheduledTaskAction -Execute $InstallerPath -Argument $argLine
     $granted = $false
@@ -592,6 +601,17 @@ try {
     }
   }
 
+  $wrong = @(Get-EndpointMismatch)
+  if ($wrong) {
+    Step 'Setting the API and fleet endpoints in the identity file'
+    # only these two values change; the rest of the file is written back as it was read
+    $cfg = Get-Content -LiteralPath $json -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($k in $endpoints.Keys) { $cfg | Add-Member -NotePropertyName $k -NotePropertyValue $endpoints[$k] -Force }
+    [IO.File]::WriteAllText((Convert-Path -LiteralPath $json), ($cfg | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding($false))) # no BOM, as Kato writes it
+    $summary['Endpoints'] = "$ApiUrl, $FleetUrl set in the identity file (it had $($wrong -join ', '))"
+    Ok "Endpoints set (the file had $($wrong -join ', '))"
+  }
+
   Step 'Verifying install'
   if (-not (Test-Path -LiteralPath $exe)) { throw "Kiosk.exe missing at $exe" }
   $installed = Get-InstalledVersion
@@ -599,7 +619,7 @@ try {
   Ok "Kiosk.exe is v$installed"
 
   if (-not (Test-Path -LiteralPath $json)) { throw "Not provisioned, no file at $json" }
-  $mismatch = @(Get-IdentityMismatch)
+  $mismatch = @(Get-IdentityMismatch) + @(Get-EndpointMismatch)
   if ($mismatch) { throw "Config mismatch: $($mismatch -join '; ')" }
   $cfg = Get-Content -LiteralPath $json -Raw | ConvertFrom-Json
   $summary['App'] = "v$installed $(if ($upToDate) { 'already installed (not reinstalled)' } else { 'installed' }) for $TargetUser, identity matches $WorkstationId, printer $($cfg.printerDestination)"
