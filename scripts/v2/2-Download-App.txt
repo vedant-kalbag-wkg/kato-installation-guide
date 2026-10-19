@@ -42,7 +42,7 @@ function Get-LatestBuild($feedUrl) {
     Version = [version]$yml.version
     Name = $yml.path
     Url = $feedUrl + [uri]::EscapeDataString($yml.path)
-    Sha512 = -join ([Convert]::FromBase64String($yml.sha512) | ForEach-Object { $_.ToString('X2') })
+    Sha512 = [BitConverter]::ToString([Convert]::FromBase64String($yml.sha512)).Replace('-', '')
   }
   Ok "Latest is v$($build.Version): $($build.Name)"
   $build
@@ -82,9 +82,10 @@ try {
       throw 'Downloaded installer does not match the sha512 in latest.yml'
     }
     Move-Item -LiteralPath $partial -Destination $target -Force
-    Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ((Get-Item -LiteralPath $target).Length / 1KB))
+    $file = Get-Item -LiteralPath $target
+    Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ($file.Length / 1KB))
 
-    $fileVer = (Get-Item -LiteralPath $target).VersionInfo.ProductVersion
+    $fileVer = $file.VersionInfo.ProductVersion
     if ($fileVer -and ([version]$fileVer) -ne $build.Version) {
       Warn "latest.yml says v$($build.Version) but file metadata says v$fileVer"
     }

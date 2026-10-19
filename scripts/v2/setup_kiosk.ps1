@@ -118,7 +118,9 @@ try {
 
   # --- 1. Install FCC ----------------------------------------------------------
   Step 'Checking FreedomPay FCC'
-  if ((Get-FccService FreewayServerService) -and (Get-FccService FreewayClientService)) {
+  $server = Get-FccService FreewayServerService
+  $client = Get-FccService FreewayClientService
+  if ($server -and $client) {
     Ok 'FCC already installed - skipping the install'
     $summary['FCC'] = 'already installed (not reinstalled)'
   } else {
@@ -137,29 +139,31 @@ try {
     $by = (Get-Date).AddMinutes(10)
     do {
       $text = if (Test-Path -LiteralPath $msiLog) { Get-Content -LiteralPath $msiLog -Raw } else { '' }
-      $done = $text -match '-- Installation (completed successfully|failed)'
-      if (-not $done) { Start-Sleep 5 }
-    } while (-not $done -and (Get-Date) -lt $by)
+      if ($text -match '-- Installation (completed successfully|failed)') { break }
+      Start-Sleep 5
+    } while ((Get-Date) -lt $by)
     if ($text -notmatch '-- Installation completed successfully') { throw "FCC install failed, exit $($p.ExitCode) (log: $msiLog)" }
-    if (-not ((Get-FccService FreewayServerService) -and (Get-FccService FreewayClientService))) {
+    $server = Get-FccService FreewayServerService
+    $client = Get-FccService FreewayClientService
+    if (-not ($server -and $client)) {
       throw 'FCC installer finished but FreewayServerService / FreewayClientService do not exist'
     }
     Ok 'FCC installed'
     $summary['FCC'] = 'installed 5.3.2.15'
   }
-  $server = (Get-FccService FreewayServerService).Name
-  $client = (Get-FccService FreewayClientService).Name
+  $server = $server.Name
+  $client = $client.Name
 
   Step "Downloading the $Region config and PAL package"
   $configDir = Join-Path $work 'config'
-  $palDir = Join-Path $work (Split-Path -Leaf $src.Pal) # local folder holding only the package
+  $pkg = Split-Path -Leaf $src.Pal
+  $palDir = Join-Path $work $pkg # local folder holding only the package
   Remove-Item -LiteralPath $palDir -Recurse -Force -ErrorAction SilentlyContinue
   foreach ($f in $configFiles) { $null = Get-FccFile "$($src.Config)/$f" $configDir }
   foreach ($f in $palFiles) { $null = Get-FccFile "$($src.Pal)/$f" $palDir }
 
   Step 'Checking which PAL package the terminal last took'
   # /reg:64 is the key Registry Editor shows, whatever the bitness of this shell
-  $pkg = Split-Path -Leaf $src.Pal
   $applied = foreach ($l in @(cmd /c "reg query `"$markKey`" /v PalPackage /reg:64 2>nul")) { if ($l -match '^\s*PalPackage\s+REG_SZ\s+(.+?)\s*$') { $Matches[1] } }
   $runPal = $applied -ne $pkg
   if ($runPal) { Ok $(if ($applied) { "$applied - updating to $pkg" } else { "none recorded - running $pkg" }) }
@@ -174,7 +178,7 @@ try {
       cmd /c "reg query `"$palKey`" /reg:64 >nul 2>&1"
       if ($LASTEXITCODE -eq 0) { throw "Could not delete $palKey" }
       $summary['Registry'] = 'deleted HKEY_LOCAL_MACHINE\SOFTWARE\Freedompay\Atlas\PAL'
-  } else {
+    } else {
       $summary['Registry'] = 'Atlas\PAL key was not present'
     }
     Ok $summary['Registry']
@@ -195,9 +199,7 @@ try {
     $summary['Config'] = "$Region ($($src.Config)), already in place"
   }
 
-  if (-not $runPal) {
-    $summary['PAL'] = "$pkg, already taken (not run again; to force it, delete PalPackage in HKEY_LOCAL_MACHINE\SOFTWARE\WeKnow\Kiosk)"
-    } else {
+  if ($runPal) {
     Step "Running the $Region PAL package"
     # FCC appends to its log all day, so only what is written from here on counts.
     # From here, not from the restart below: the terminal can take the package while the .bat runs
@@ -209,12 +211,12 @@ try {
     if ($code -ne 0) { throw "updateNewPal.bat exited with $code" }
     Ok 'PAL package run'
     $summary['PAL'] = $pkg
+  } else {
+    $summary['PAL'] = "$pkg, already taken (not run again; to force it, delete PalPackage in HKEY_LOCAL_MACHINE\SOFTWARE\WeKnow\Kiosk)"
   }
 
   # --- 2c. Restart the services in order ------------------------------------------
-  if (-not ($runPal -or $changed)) {
-    $summary['Services'] = 'not restarted - PAL package and config unchanged'
-  } else {
+  if ($runPal -or $changed) {
     Step "Restarting $server, then $client"
     Restart-Service -Name $server -Force
     Restart-Service -Name $client -Force
@@ -226,16 +228,15 @@ try {
     if ($stopped) { throw "Not running: $($stopped -join ', ')" }
     $summary['Services'] = 'FreewayServerService, FreewayClientService Running'
     Ok 'Both Running'
+  } else {
+    $summary['Services'] = 'not restarted - PAL package and config unchanged'
   }
+
   if ($runPal) {
     # recorded now, not after the log check: on a terminal that already has the package FCC may never log the push
     cmd /c "reg add `"$markKey`" /v PalPackage /t REG_SZ /d `"$pkg`" /f /reg:64 >nul"
     if ($LASTEXITCODE -ne 0) { Warn "Could not record $pkg in $markKey - the next run will apply it again" }
-  }
 
-  if (-not $runPal) {
-    $summary['Log'] = 'not checked - PAL package not run again'
-  } else {
     Step 'Waiting for Lane Open, Successfully pushed, PalWriteSucceeded in the FCC log (max 120s)'
     $want = 'Lane Open', 'Successfully pushed', 'PalWriteSucceeded'
     $by = (Get-Date).AddSeconds(120)
@@ -251,6 +252,8 @@ try {
     } else {
       $summary['Log'] = 'Lane Open, Successfully pushed, PalWriteSucceeded'
     }
+  } else {
+    $summary['Log'] = 'not checked - PAL package not run again'
   }
 
   Write-Host ""
@@ -316,7 +319,7 @@ function Get-LatestBuild($feedUrl) {
     Version = [version]$yml.version
     Name = $yml.path
     Url = $feedUrl + [uri]::EscapeDataString($yml.path)
-    Sha512 = -join ([Convert]::FromBase64String($yml.sha512) | ForEach-Object { $_.ToString('X2') })
+    Sha512 = [BitConverter]::ToString([Convert]::FromBase64String($yml.sha512)).Replace('-', '')
   }
   Ok "Latest is v$($build.Version): $($build.Name)"
   $build
@@ -356,9 +359,10 @@ try {
       throw 'Downloaded installer does not match the sha512 in latest.yml'
     }
     Move-Item -LiteralPath $partial -Destination $target -Force
-    Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ((Get-Item -LiteralPath $target).Length / 1KB))
+    $file = Get-Item -LiteralPath $target
+    Ok ("Downloaded {0} ({1:n0} KB), sha512 matches latest.yml" -f $build.Name, ($file.Length / 1KB))
 
-    $fileVer = (Get-Item -LiteralPath $target).VersionInfo.ProductVersion
+    $fileVer = $file.VersionInfo.ProductVersion
     if ($fileVer -and ([version]$fileVer) -ne $build.Version) {
       Warn "latest.yml says v$($build.Version) but file metadata says v$fileVer"
     }
@@ -439,15 +443,17 @@ function Get-LatestBuild($feedUrl) {
     Version = [version]$yml.version
     Name = $yml.path
     Url = $feedUrl + [uri]::EscapeDataString($yml.path)
-    Sha512 = -join ([Convert]::FromBase64String($yml.sha512) | ForEach-Object { $_.ToString('X2') })
+    Sha512 = [BitConverter]::ToString([Convert]::FromBase64String($yml.sha512)).Replace('-', '')
   }
   Ok "Latest is v$($build.Version): $($build.Name)"
   $build
 }
 
 # Windows' LSA calls: grant and remove one user right for one account, as Local Security Policy does
-# (every other account's rights are left alone), and read the stored automatic sign-in password
-if (-not ('WkgLsa' -as [type])) {
+# (every other account's rights are left alone), and read the stored automatic sign-in password.
+# Compiled only when needed: it takes a few seconds
+function Import-WkgLsa {
+  if ('WkgLsa' -as [type]) { return }
   Add-Type -TypeDefinition @"
 using System;
 using System.ComponentModel;
@@ -591,6 +597,7 @@ try {
     $granted = $false
     try {
       if (-not $signedIn) {
+        Import-WkgLsa
         # Without a session Windows needs the user's password: it refuses a no-password (S4U) task on these
         # kiosks, even to SYSTEM. Use the one the machine keeps for the user's automatic sign-in
         $winlogon = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
@@ -684,13 +691,12 @@ try {
     # a bad config (e.g. wrong API endpoints) installs fine but Kato closes straight away
     function Get-Kato { @(Get-Process -Name Kiosk -IncludeUserName -ErrorAction SilentlyContinue | Where-Object UserName -like "*\$TargetUser") }
     # already running = already locked down; closing it would restart the machine (Shell Launcher action 3)
-    $wasRunning = [bool](Get-Kato)
+    $kato = Get-Kato
+    $wasRunning = [bool]$kato
     if (-not $wasRunning) {
       Register-ScheduledTask -TaskName $task -Action (New-ScheduledTaskAction -Execute $exe) -Principal $principal -Force -ErrorAction Stop | Start-ScheduledTask -ErrorAction Stop
       Start-Sleep 30
-    }
-    $kato = Get-Kato
-    if (-not $wasRunning) {
+      $kato = Get-Kato
       $kato | Stop-Process -Force # step 4's lockdown starts it for real
       Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     }

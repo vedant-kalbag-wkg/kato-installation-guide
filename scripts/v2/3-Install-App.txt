@@ -53,15 +53,17 @@ function Get-LatestBuild($feedUrl) {
     Version = [version]$yml.version
     Name = $yml.path
     Url = $feedUrl + [uri]::EscapeDataString($yml.path)
-    Sha512 = -join ([Convert]::FromBase64String($yml.sha512) | ForEach-Object { $_.ToString('X2') })
+    Sha512 = [BitConverter]::ToString([Convert]::FromBase64String($yml.sha512)).Replace('-', '')
   }
   Ok "Latest is v$($build.Version): $($build.Name)"
   $build
 }
 
 # Windows' LSA calls: grant and remove one user right for one account, as Local Security Policy does
-# (every other account's rights are left alone), and read the stored automatic sign-in password
-if (-not ('WkgLsa' -as [type])) {
+# (every other account's rights are left alone), and read the stored automatic sign-in password.
+# Compiled only when needed: it takes a few seconds
+function Import-WkgLsa {
+  if ('WkgLsa' -as [type]) { return }
   Add-Type -TypeDefinition @"
 using System;
 using System.ComponentModel;
@@ -205,6 +207,7 @@ try {
     $granted = $false
     try {
       if (-not $signedIn) {
+        Import-WkgLsa
         # Without a session Windows needs the user's password: it refuses a no-password (S4U) task on these
         # kiosks, even to SYSTEM. Use the one the machine keeps for the user's automatic sign-in
         $winlogon = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
@@ -298,13 +301,12 @@ try {
     # a bad config (e.g. wrong API endpoints) installs fine but Kato closes straight away
     function Get-Kato { @(Get-Process -Name Kiosk -IncludeUserName -ErrorAction SilentlyContinue | Where-Object UserName -like "*\$TargetUser") }
     # already running = already locked down; closing it would restart the machine (Shell Launcher action 3)
-    $wasRunning = [bool](Get-Kato)
+    $kato = Get-Kato
+    $wasRunning = [bool]$kato
     if (-not $wasRunning) {
       Register-ScheduledTask -TaskName $task -Action (New-ScheduledTaskAction -Execute $exe) -Principal $principal -Force -ErrorAction Stop | Start-ScheduledTask -ErrorAction Stop
       Start-Sleep 30
-    }
-    $kato = Get-Kato
-    if (-not $wasRunning) {
+      $kato = Get-Kato
       $kato | Stop-Process -Force # step 4's lockdown starts it for real
       Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
     }
