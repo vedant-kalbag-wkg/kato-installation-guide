@@ -7,6 +7,7 @@
   Paste it whole into a PowerShell window (e.g. N-central Take Control) after setting the
   first three values below, or run it as a file with -Region -KioskId -ApiKey.
   The Workstation ID is this computer's name.
+  Everything it prints is also added to C:\installation.log, to read after the restart.
   Every setting is here, once: the steps get these values, whatever their own copies say.
 #>
 
@@ -20,6 +21,7 @@ $KioskFeedUrl = 'https://wkgdevstore.blob.core.windows.net/kiosk/' # Kato app up
 $FccFeedUrl = "${KioskFeedUrl}FCC/" # FCC installer, configs and PAL packages
 $ApiUrl = 'https://api.weknow.technology/api' # Kato's API and fleet endpoints, given to the installer for now
 $FleetUrl = 'wss://api.weknow.technology'
+$LogFile = 'C:\installation.log' # each run's output is added to it, so it can be read after the restart
 
 $start = Get-Date
 $steps = [ordered]@{}
@@ -786,7 +788,13 @@ $params['3-Shell-Lock'] = 'TargetUser'
 
 # returns 0 or 1 instead of exiting: exit in a pasted script closes the PowerShell window
 $result = & {
-  $names = 'Region', 'KioskId', 'ApiKey', 'TargetUser', 'InstallerDir', 'KioskFeedUrl', 'FccFeedUrl', 'ApiUrl', 'FleetUrl'
+  # everything the steps print also goes to $LogFile. A failed write never stops the setup
+  function Write-Host([Parameter(Position = 0)] $Object, $ForegroundColor) {
+    Microsoft.PowerShell.Utility\Write-Host @PSBoundParameters
+    try { Add-Content -LiteralPath $LogFile -Value "$Object" -Encoding UTF8 -ErrorAction Stop } catch {}
+  }
+  function Out-Host { process { Write-Host "$_" } } # step 1's PAL package output
+  $names = 'Region', 'KioskId', 'ApiKey', 'TargetUser', 'InstallerDir', 'KioskFeedUrl', 'FccFeedUrl', 'ApiUrl', 'FleetUrl', 'LogFile'
   for ($i = 0; $i -lt $args.Count; $i += 2) {
     $name = "$($args[$i])".TrimStart('-').TrimEnd(':')
     if ($name -notin $names) { Write-Host "Unknown parameter '$($args[$i])'. Use: -$($names -join ', -')" -ForegroundColor Red; return 1 }
@@ -794,6 +802,8 @@ $result = & {
   }
   $unset = @($names[0..2] | Where-Object { (Get-Variable $_ -ValueOnly) -like '{*' })
   if ($unset) { Write-Host "Set $($unset -join ', ') at the top of the script before running" -ForegroundColor Red; return 1 }
+  Write-Host ""
+  Write-Host "=== setup_kiosk on $env:COMPUTERNAME at $((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - output also saved to $LogFile ==="
 
   foreach ($step in $steps.Keys) {
     $stepArgs = @(foreach ($n in $params[$step]) { if ($n -in $names) { "-$n"; Get-Variable $n -ValueOnly } })
