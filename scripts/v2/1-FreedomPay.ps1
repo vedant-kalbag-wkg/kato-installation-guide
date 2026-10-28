@@ -1,6 +1,6 @@
 <#
-  EXPERIMENTAL v2, step 1 of 3 - not yet in the guide.
-  Appendix A (Building the machine - FreedomPay FCC) for one region:
+  v2, step 1 of 3. Guide: Part 2, Option A (by hand: Appendix A.1-A.2).
+  Appendix A.1-A.2 (FreedomPay FCC, PAL flashing) for one region:
     1. Install FCC - skipped if its services already exist
     2. Apply the WeKnow configuration:
        a. delete HKEY_LOCAL_MACHINE\SOFTWARE\Freedompay\Atlas\PAL
@@ -104,8 +104,8 @@ try {
     $msiLog = Join-Path $work 'fcc-install.log'
     Remove-Item -LiteralPath $msiLog -Force -ErrorAction SilentlyContinue
 
-    Step 'Installing FCC 5.3.2.15 silently with the Appendix A choices (max 10 min)'
-    # The launcher hands its arguments to Windows Installer. Appendix A's choices, as a logged manual install recorded them:
+    Step 'Installing FCC 5.3.2.15 silently with the Appendix A.1 choices (max 10 min)'
+    # The launcher hands its arguments to Windows Installer. Appendix A.1's choices, as a logged manual install recorded them:
     #   SKIP_AMA_CHECKS=true  skip the RUS activation
     #   ADDLOCAL=...          Custom: Freeway POI Drivers (USBDriver) + Freeway Server Service (FCCServer); FCCClient, WixSwidTag came with them
     $p = Start-Process -FilePath $fccExe -ArgumentList "/qn /l*v `"$msiLog`" SKIP_AMA_CHECKS=true ADDLOCAL=FCCClient,USBDriver,FCCServer,WixSwidTag" -PassThru
@@ -225,7 +225,7 @@ try {
       if ($missing) { Start-Sleep 3 }
     } while ($missing -and (Get-Date) -lt $by)
     if ($missing) {
-      Warn "FCC log has no $($missing -join ', ') - check the PDQ, then Appendix A 'When the build goes wrong'"
+      Warn "FCC log has no $($missing -join ', ') - check the PDQ, then the guide's 'Card terminal and FCC problems'"
       $summary['Log'] = 'checks INCOMPLETE - do not hand the machine on'
     } else {
       $summary['Log'] = 'Lane Open, Successfully pushed, PalWriteSucceeded'

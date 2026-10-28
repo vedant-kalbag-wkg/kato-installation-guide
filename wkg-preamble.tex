@@ -76,7 +76,7 @@
 \fancyhead[R]{\raisebox{-0.35\height}{\includegraphics[height=15pt]{wkg-logo-horizontal}}}
 \renewcommand{\headrulewidth}{0.8pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{weknowazure}\leaders\hrule height \headrulewidth\hfill}}
-\fancyfoot[L]{\scriptsize\color{weknowgreyN}Internal --- We Know Group}
+\fancyfoot[L]{\scriptsize\color{weknowgreyN}Internal | We Know Group}
 \fancyfoot[C]{\scriptsize\color{weknowgreyN}\guidetitle}
 \fancyfoot[R]{\scriptsize\color{weknowgreyN}Page \thepage\ of \pageref{LastPage}}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -93,7 +93,12 @@
   {\color{weknowsea}\Large\bfseries}
   {\color{weknowazure}\thesubsection}{0.6em}{}
 \titlespacing*{\section}{0pt}{20pt}{12pt}
+\titleformat{\subsubsection}
+  {\color{weknowsea}\large\bfseries}
+  {\color{weknowazure}\thesubsubsection}{0.5em}{}
 \titlespacing*{\subsection}{0pt}{16pt}{6pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{4pt}
+\setcounter{tocdepth}{2}
 % The running head takes its text from \wksecmark, not from the section
 % title, so role badges never leak into the header. \wksection and
 % \wkrolesection (defined below) set it. Subsections must not overwrite
@@ -176,7 +181,7 @@
 %---------------------------------------------------------------------
 \newcommand{\wpath}[1]{{\ttfamily\small #1}}
 \newcommand{\tick}{{\color{weknowsea}$\checkmark$}}
-\newcommand{\emptybox}{{\color{weknowgreyM}$\square$}}
+\newcommand{\emptybox}{\leavevmode{\color{weknowgreyM}$\square$}}
 
 % Role badges -- white on solid Azure, in two sizes.
 %   \role     for the section heading (set \LARGE, so the badge sits at
@@ -201,7 +206,7 @@
 % given, place the badge at heading size in the body and at the smaller
 % size in the table of contents.
 %   \wksection{Final checklist}
-%   \wkrolesection{Part 2 --- Install and lock the kiosk}{IT}
+%   \wkrolesection{Part 2: Install and lock the kiosk}{IT}
 %---------------------------------------------------------------------
 \newcommand{\wksection}[1]{%
   \renewcommand{\wksecmark}{#1}%

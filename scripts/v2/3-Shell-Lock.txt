@@ -1,5 +1,5 @@
 <#
-  EXPERIMENTAL v2, step 3 of 3 - not yet in the guide.
+  v2, step 3 of 3. Guide: Part 2, Option A (by hand: Appendix A.4, SLUtility).
   Lock the machine into kiosk mode: Shell Launcher runs Kiosk.exe as the
   target account's shell. Scripted equivalent of SLUtility's Disable User
   Shell, Set User Shell (Action 3), Enable Shell Launcher. Turns the Windows
