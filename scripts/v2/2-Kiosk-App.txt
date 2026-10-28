@@ -1,5 +1,5 @@
 <#
-  v2, step 2 of 3. Guide: Part 2, Option A (by hand: Option B).
+  v2, step 2 of 3. Guide: Part 2, Option A (by hand: Appendix A.3).
   Download the latest Kato app installer named in the update feed's latest.yml
   into the installer folder (checked against the feed's sha512), install it
   per-user into the target account via a scheduled task, verify the installed
