@@ -6,8 +6,8 @@ the work:
 | Section | Audience | Covers |
 |---|---|---|
 | Part 1 | Account Managers | Command Centre: location, kiosk, configuration, prep checks, installation record; send IT the kiosk's link. |
-| Part 2 | IT | Copy the Kiosk ID and generate the API key from that link (used at once, never saved), silent app install (N-central script or manual), kiosk lockdown. |
-| Appendix A | IT | Building the machine: FreedomPay FCC install, PAL packages, verification. Once per machine, before Part 2. |
+| Part 2 | IT | Copy the Kiosk ID and generate the API key from that link (used at once, never saved). Option A: one N-central setup script builds the machine, installs the app and locks it down. Option B: the same by hand. |
+| Appendix A | IT | Building the machine by hand: FreedomPay FCC install, PAL packages, verification, troubleshooting. Once per machine; the setup script does it as its step 1. |
 | Appendix B | Both | One-page quick reference. |
 
 ## Build
@@ -40,15 +40,35 @@ from the FreedomPay certification guide — it is outdated.
 - `images/cc-*.png` — Command Centre screenshots (locations, kiosks, prep
   checks, API keys, installations).
 - `images/fcc-*.png` — FreedomPay FCC installer and log screenshots.
-- `images/ncentral-powershell.png` — N-central System Shell, for the one-run
-  install script.
-- `scripts/Install-Kiosk.txt` — the N-central install script. The guide's
-  *Download Install-Kiosk.txt* button downloads it from the `install-script`
-  GitHub release. On every push to `main` that changes it,
-  `.github/workflows/publish-install-script.yml` re-uploads it there, so edit
-  the script here and push; the link always serves the latest version. It is
-  PowerShell, but stays `.txt` so it opens in Notepad. The PDF
-  does not include it, so Overleaf does not need the `scripts/` folder.
+- `images/ncentral-powershell.png` — N-central System Shell in PowerShell
+  mode, where the setup scripts are pasted.
+- `scripts/v2/` — the setup scripts the guide's Part 2 Option A uses. They are
+  pasted into the N-central remote connection's PowerShell (running as
+  SYSTEM), or run from the N-central repository with parameters. The guide
+  links to them on `main` (raw.githubusercontent.com), so a push to `main`
+  updates what IT get.
+  - `1-FreedomPay.ps1` — Appendix A for one region (`UK`, `DE`, `ES`, `PT`).
+  - `2-Kiosk-App.txt` — downloads, installs and checks the Kato app as
+    SelfBooker.
+  - `3-Shell-Lock.txt` — Shell Launcher lockdown, then a restart into Kato.
+  - `setup_kiosk.ps1` — all three steps in one script, with every setting
+    at the top. It holds the full code of each step, so rebuild it after
+    editing a step. Its output is also saved to `C:\installation.log`.
+
+  Every script must survive being pasted line by line into PowerShell 5.1:
+  `} catch {` / `} else {` on the same line as the closing brace, and no bare
+  `exit`. The guide's command boxes follow the same rule: every line is a
+  complete command, short enough not to wrap in the PDF.
+- `scripts/Install-Kiosk.txt` — the earlier N-central install script (app
+  install only), superseded by `scripts/v2/` and no longer in the guide.
+  `.github/workflows/publish-install-script.yml` still re-uploads it to the
+  `install-script` GitHub release when it changes on `main`, so old links keep
+  working. The PDF does not include any script, so Overleaf does not need the
+  `scripts/` folder.
+- `scripts/Get-KioskFile.ps1` — N-central repository script that downloads a
+  file from an HTTPS link into a folder on one or many kiosks, replacing any
+  older copy (`-Url … -Destination … [-FileName …]`). Guide: *Push a file to
+  kiosks from N-central*, option 2.
 
 ## Branding
 

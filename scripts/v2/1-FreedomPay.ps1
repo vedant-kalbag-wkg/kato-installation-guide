@@ -1,5 +1,5 @@
 <#
-  EXPERIMENTAL v2, step 1 of 3 - not yet in the guide.
+  v2, step 1 of 3. Guide: Part 2, Option A (by hand: Appendix A).
   Appendix A (Building the machine - FreedomPay FCC) for one region:
     1. Install FCC - skipped if its services already exist
     2. Apply the WeKnow configuration:

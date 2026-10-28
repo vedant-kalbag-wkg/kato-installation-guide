@@ -41,17 +41,18 @@ Part 1: create the location, kiosk and installation record in Command
 Centre, clear the prep checks, and send IT the kiosk's link.\\
 \rowcolor{weknowgreyL}
 \S\ref{sec:part2} & IT &
-Part 2: copy the Kiosk ID, generate the API key, install the Kato app,
-and lock the machine into kiosk mode.\\
+Part 2: copy the Kiosk ID and generate the API key, then one N-central
+setup script builds the machine, installs the Kato app and locks it into
+kiosk mode. Or do it by hand.\\
 \S\ref{sec:checklist} & Both &
 Final checklist, run before leaving site.\\
 \rowcolor{weknowgreyL}
 \S\ref{sec:trouble} & IT &
-When things go wrong: common faults, the identity file checks, and
-finding the printer's COM port.\\
+When things go wrong: common faults, the setup script's messages, the
+identity file checks, and finding the printer's COM port.\\
 Appendix~\ref{sec:fcc} & IT &
-Building the machine: install and verify FreedomPay FCC. Once per machine,
-before Part~2.\\
+Building the machine by hand: install and verify FreedomPay FCC. Once per
+machine. The setup script does this as its first step.\\
 \rowcolor{weknowgreyL}
 Appendix~\ref{sec:quickref} & Both &
 One-page quick reference for someone who has done this before.\\
@@ -105,16 +106,17 @@ One-page quick reference for someone who has done this before.\\
 
 \begin{wkwarn}[The machine must be built first]
 FreedomPay FCC and the PAL packages must be installed and verified on the
-machine before the kiosk goes live. IT do this once per machine using
-Appendix~\ref{sec:fcc} --- the prep checks in Part~1 cannot honestly be
+machine before the kiosk goes live. IT do this once per machine: the Part~2
+setup script does it as its first step, or by hand with
+Appendix~\ref{sec:fcc}. The prep checks in Part~1 cannot honestly be
 cleared until it is done.
 \end{wkwarn}
 
 \begin{wkinfo}[Golden rules]
 \begin{itemize}
   \item The \textbf{API key is shown once}. IT generate it at the moment
-        of install and paste it straight into the install --- it is never
-        saved or sent anywhere. If it is lost, generate a new one.
+        of install and paste it straight into the setup script or install
+        command --- it is never saved or sent anywhere. If it is lost, generate a new one.
   \item The \textbf{Kiosk ID} and the \textbf{Workstation ID} are
         different things --- see \S\ref{sec:ids}.
   \item Do not clear a prep check you have not actually verified. It is
@@ -207,6 +209,14 @@ FCC registry key &
 \wpath{HKEY\_LOCAL\_MACHINE\textbackslash SOFTWARE\textbackslash Freedompay\textbackslash Atlas\textbackslash PAL}\\
 Latest app release &
 \href{https://github.com/WeKnowTechnology/wkg-electron-app/releases}{\wpath{github.com/WeKnowTechnology/wkg-electron-app/releases}}\\
+\rowcolor{weknowgreyL}
+Setup scripts &
+\href{https://github.com/vedant-kalbag-wkg/kato-installation-guide/tree/main/scripts/v2}{\wpath{github.com/vedant-kalbag-wkg/kato-installation-guide/tree/main/scripts/v2}}\\
+Setup script log &
+\wpath{C:\textbackslash installation.log}\\
+\rowcolor{weknowgreyL}
+Step 1's PAL record &
+\wpath{HKEY\_LOCAL\_MACHINE\textbackslash SOFTWARE\textbackslash WeKnow\textbackslash Kiosk}, value \wpath{PalPackage}\\
 \end{tabularx}
 \end{center}
 
@@ -425,7 +435,7 @@ Before clearing them, verify with IT that:
         sensors and scanners;
   \item FreedomPay has been installed, and the
         \wpath{FreewayClientService} and \wpath{FreewayServerService} are
-        running (Appendix~\ref{sec:fcc}).
+        running (step~1 of the setup script, or Appendix~\ref{sec:fcc}).
 \end{itemize}
 
 \subsection{Create the installation record}
@@ -481,30 +491,48 @@ You need the link to the kiosk in Command Centre from the Account Manager,
 and a Command Centre account --- ask the WKG Technology team if you do not
 have one.
 
-\begin{wkwarn}[Build the machine first]
-If FreedomPay FCC is not yet installed and verified on this machine, do
-Appendix~\ref{sec:fcc} first. It is done once per machine, signed in as
-\wpath{WKGAdmin}.
-\end{wkwarn}
+There are two ways to do this part. Use \textbf{Option A}. Use Option~B
+only if the script cannot be used, or to finish by hand a job the script
+stopped on.
 
-\subsection{Get the installer onto the machine}
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{44mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Option} &
+\color{white}\textbf{What it does}\\
+A --- Setup script from N-central (\S\ref{sec:ncentral}) &
+One paste into the N-central remote connection. It builds the machine
+(Appendix~\ref{sec:fcc}), installs the Kato app, locks the machine into
+kiosk mode and restarts it into Kato, checking each result as it goes.\\
+\rowcolor{weknowgreyL}
+B --- By hand (\S\ref{sec:manual}) &
+Appendix~\ref{sec:fcc}, then the silent install signed in as
+\wpath{SelfBooker}, then the lockdown with \wpath{SLUtility}.\\
+\end{tabularx}
+\end{center}
 
-\begin{enumerate}
-  \item Download the latest \wpath{Kiosk Setup X.Y.Z.exe} from the
-        \href{https://github.com/WeKnowTechnology/wkg-electron-app/releases}{app
-        releases page}.
+\subsection{Before you install}\label{sec:preinstall}
 
-  \item Copy it into\\
-        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}\\
-        This is the folder the N-central script looks in. Keep only one
-        installer there --- if several are present the script takes the
-        highest version and warns about the rest.
-\end{enumerate}
+\begin{itemize}
+  \item The \textbf{PDQ is plugged in}. The build cannot be verified
+        without it.
+  \item You know the kiosk's \textbf{region}: \wpath{UK}, \wpath{DE},
+        \wpath{ES} or \wpath{PT}. It picks the FreedomPay config and PAL
+        package.
+  \item \wpath{SelfBooker} is \textbf{signed in}, or \textbf{signs in
+        automatically} when the machine starts. The script installs the
+        app as \wpath{SelfBooker} either way.
+  \item For Option~A: the machine's \textbf{computer name is its
+        Workstation ID}, e.g.\ \wpath{WKG-POS-617} --- the kiosk's serial
+        number in Command Centre. The script uses the computer name as the
+        Workstation ID. If they differ, use Option~B, where you type the
+        Workstation ID yourself.
+\end{itemize}
 
 \subsection{Get the Kiosk ID and API key}\label{sec:getkeys}
 
-Do this \textbf{immediately before you install}, with the install script or
-command open and ready to paste into.
+Do this \textbf{immediately before you install}, with the setup script or
+install command open and ready to paste into.
 
 \begin{enumerate}
   \item Open the kiosk link from the Account Manager. On the
@@ -524,22 +552,18 @@ command open and ready to paste into.
 
 \begin{wkwarn}[Use the API key straight away --- do not save it]
 The full key is displayed \textbf{only once, at creation}. Paste it
-directly into the install script or command. Do not save it anywhere or
-send it to anyone --- not the ticket, chat, email or a notes file. If you
-lose it before the install is done, simply generate a new one.
+directly into the setup script or install command. Do not save it anywhere
+or send it to anyone --- not the ticket, chat, email or a notes file. If
+you lose it before the install is done, simply generate a new one.
 \end{wkwarn}
 
-Then install using \textbf{one} of the two methods below. The N-central
-script is preferred: it validates the credentials, runs the install as
-\wpath{SelfBooker} and checks the result for you.
+\subsection{Option A --- Setup script from N-central}\label{sec:ncentral}
 
-\subsection{Option A --- One-run script from N-central}\label{sec:ncentral}
+The setup script, \wpath{setup\_kiosk.ps1}, runs in the N-central remote
+connection's PowerShell, as the machine's system account. It holds three
+steps and runs them in order, stopping at the first one that fails.
 
 \begin{enumerate}
-  \item Make sure \wpath{SelfBooker} is \textbf{signed in} on the machine.
-        The install is per-user, and the script warns if the account is not
-        logged on.
-
   \item Open the N-central remote connection to the machine. In the
         \textbf{System Shell} panel, select the \textbf{PowerShell} icon at
         the top right to switch the shell to PowerShell mode.
@@ -547,40 +571,212 @@ script is preferred: it validates the credentials, runs the install as
 
 \screenshot[0.94]{ncentral-powershell}{N-central System Shell. The PowerShell icon is the first of the three at the top right; the shell shows \textbf{Powershell} once switched.}
 
-\begin{enumerate}\setcounter{enumi}{2}
-  \item Click the button below to download the script (sign in to GitHub
-        if asked), then open the downloaded \wpath{Install-Kiosk.txt} in
-        Notepad.
+\begin{enumerate}\setcounter{enumi}{1}
+  \item On your own computer, open the script with the button below. It
+        opens as text in the browser. Select all (\textbf{Ctrl+A}), copy
+        (\textbf{Ctrl+C}) and paste it into a new \textbf{Notepad} window.
         \begin{center}
-        \href{https://github.com/vedant-kalbag-wkg/kato-installation-guide/releases/download/install-script/Install-Kiosk.txt}{%
-          \colorbox{weknowazure}{\color{white}\bfseries\strut\quad Download Install-Kiosk.txt\quad}}
+        \href{https://raw.githubusercontent.com/vedant-kalbag-wkg/kato-installation-guide/main/scripts/v2/setup_kiosk.ps1}{%
+          \colorbox{weknowazure}{\color{white}\bfseries\strut\quad Open setup\_kiosk.ps1\quad}}
         \end{center}
-  \item Replace the three values at the top --- \wpath{\$KioskId},
-        \wpath{\$WorkstationId} and \wpath{\$ApiKey} --- with the ones from
-        \S\ref{sec:getkeys}. The script rejects the placeholders, so it
-        will not run until they are replaced. Close Notepad without saving
-        once the script is copied.
-
-  \item Select all (\textbf{Ctrl+A}), copy (\textbf{Ctrl+C}), and paste
-        the whole script into the N-central shell.
-
-  \item Press \textbf{Enter twice}: once to submit the script and once to
-        run it.
-
-  \item Wait for \textbf{\texttt{=== SUCCESS ===}}. Anything else ends in
-        \texttt{=== FAILED ===} with the reason on the next line.
+  \item In Notepad, replace the three values at the top ---
+        \wpath{\$Region}, \wpath{\$KioskId} and \wpath{\$ApiKey} --- with
+        the region and the values from \S\ref{sec:getkeys}. Keep the
+        quotes, and leave everything below them alone. The script stops
+        straight away if a value is still a placeholder.
+  \item Select all and copy again, then close Notepad \textbf{without
+        saving} --- it holds the API key.
+  \item Paste the whole script into the N-central shell. It runs as it
+        arrives. If the last line is left waiting at the prompt, press
+        \textbf{Enter}.
+  \item Watch the output. Each step ends with \texttt{=== SUCCESS ===} and
+        a summary, and the run ends with
+        \texttt{=== ALL 3 STEPS PASSED ===}. The machine then restarts and
+        comes up in the Kato app as \wpath{SelfBooker}, with no desktop.
 \end{enumerate}
 
-\begin{wkinfo}[The script does not set the printer]
-It installs with the default port, \wpath{COM8}, and prints the port it
-ended up with on the \texttt{Printer:} line. If the printer is elsewhere,
-correct it in \wpath{kiosk-identity.json} --- see \S\ref{sec:comport}.
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{20mm} X L{40mm}}
+\rowcolor{weknownight}\color{white}\textbf{Step} &
+\color{white}\textbf{What it does} &
+\color{white}\textbf{Skipped on a rerun}\\
+1 FreedomPay &
+Appendix~\ref{sec:fcc} for the region: installs FCC 5.3.2.15 silently,
+deletes the \wpath{Atlas\textbackslash PAL} key, copies the config, runs
+the PAL package and restarts the services in order. Then waits up to two
+minutes for \emph{Lane Open}, \emph{Successfully pushed} and
+\emph{PalWriteSucceeded} in the FCC log. &
+The FCC install, if FCC is there. The PAL package and the service
+restart, if this region's package was the last one run.\\
+\rowcolor{weknowgreyL}
+2 Kiosk App &
+Downloads the latest Kato installer into
+\wpath{SelfBooker\textbackslash Documents} and checks it against its
+published checksum. Installs it as \wpath{SelfBooker} with the Kiosk ID,
+Workstation ID, API key and the \wpath{api.weknow.technology} endpoints,
+then checks the version and \wpath{kiosk-identity.json}. If
+\wpath{SelfBooker} is signed in, starts Kato for 30 seconds to prove it
+runs. &
+The download and install, if the latest version is installed with the
+same IDs.\\
+3 Shell Lock &
+What \wpath{SLUtility} does by hand: turns on the Windows Shell Launcher
+feature if it is off, makes \wpath{Kiosk.exe} the shell for
+\wpath{SelfBooker} (Action~3) and enables Shell Launcher. Then restarts
+the machine after 15 seconds. &
+Everything, including the restart, if already locked down with Kato
+running.\\
+\end{tabularx}
+\end{center}
+
+\begin{wkwarn}[Read step 1's summary --- a warning does not stop the run]
+If the FCC log never shows all three lines, step 1 still ends in
+\texttt{SUCCESS}, with a yellow warning and a summary \texttt{Log} line
+that says \texttt{checks INCOMPLETE - do not hand the machine on}. The run
+carries on and restarts the machine. Fix it with Appendix~\ref{sec:fcc}'s
+troubleshooting (\S\ref{sec:fcctrouble}) before you leave site.
+\end{wkwarn}
+
+\begin{wkinfo}[Missed the output? It is saved on the machine]
+Everything the script prints is also added to
+\wpath{C:\textbackslash installation.log}, so it can still be read after
+the restart. Reopen the N-central shell in PowerShell mode and run
+\wpath{Get-Content C:\textbackslash installation.log -Tail 80}. Each run
+starts with \texttt{=== setup\_kiosk on <computer> at <time> ===} and is
+added after the earlier ones. The API key is never written to it.
 \end{wkinfo}
 
-Skip to step~3 of Option~B to confirm the identity file, then continue with
-the lockdown.
+\begin{wkinfo}[If it stops]
+The run ends with \texttt{=== STOPPED at <step> ===}, under that step's
+\texttt{FAILED} message and a \texttt{Failed at} line naming what it was
+doing. Fix the cause (\S\ref{sec:scripttrouble}), then paste the script
+again. Rerunning is safe and quick: steps already done are skipped, so a
+rerun on a finished kiosk changes nothing.
+\end{wkinfo}
 
-\subsection{Option B --- Manually, signed in as \wpath{SelfBooker}}
+\begin{wkinfo}[The script does not set the printer]
+The app installs with the default port, \wpath{COM8}. Step 2's summary
+shows the port it ended up with on the \texttt{App} line. If the printer
+is elsewhere, correct it in \wpath{kiosk-identity.json} --- see
+\S\ref{sec:comport}.
+\end{wkinfo}
+
+\paragraph{Running one step on its own.} Each step is also a script of its
+own, pasted the same way, with only its own values at the top. Use them to
+redo one step, or to build a machine (step~1) before the kiosk record
+exists.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}\small
+\begin{tabularx}{\textwidth}{L{40mm} L{34mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Script} &
+\color{white}\textbf{Values to set} &
+\color{white}\textbf{Does}\\
+\href{https://raw.githubusercontent.com/vedant-kalbag-wkg/kato-installation-guide/main/scripts/v2/1-FreedomPay.ps1}{\wpath{1-FreedomPay.ps1}} &
+\wpath{\$Region} & Step 1 --- Appendix~\ref{sec:fcc}.\\
+\rowcolor{weknowgreyL}
+\href{https://raw.githubusercontent.com/vedant-kalbag-wkg/kato-installation-guide/main/scripts/v2/2-Kiosk-App.txt}{\wpath{2-Kiosk-App.txt}} &
+\wpath{\$KioskId}, \wpath{\$ApiKey} & Step 2 --- the Kato app.\\
+\href{https://raw.githubusercontent.com/vedant-kalbag-wkg/kato-installation-guide/main/scripts/v2/3-Shell-Lock.txt}{\wpath{3-Shell-Lock.txt}} &
+none & Step 3 --- the lockdown and restart.\\
+\end{tabularx}
+\end{center}
+
+\begin{wkinfo}[Running it from the N-central repository instead]
+Instead of pasting, the script can be stored in N-central once and run
+with the values passed in:
+\begin{enumerate}
+  \item Save the script as \wpath{setup\_kiosk.ps1}. In
+        \textbf{Configuration $\rightarrow$ Scheduled Tasks $\rightarrow$
+        Script/Software Repository}, select \textbf{Add $\rightarrow$
+        Scripting} and upload it. When the script changes, open the item
+        and use \textbf{Change} beside the file name.
+  \item On the device, open \textbf{Tools $\rightarrow$ Task Execution},
+        choose the script, and run it with \textbf{LocalSystem} and these
+        command-line parameters:\\
+        \wpath{-Region UK -KioskId <id> -ApiKey <key>}
+  \item Read the \textbf{Output} pane for
+        \texttt{=== ALL 3 STEPS PASSED ===}, or
+        \wpath{C:\textbackslash installation.log} after the restart.
+\end{enumerate}
+N-central keeps a task's command-line parameters, so this stores the API
+key in N-central. Regenerate the key if the task record could be seen by
+anyone who should not have it.
+\end{wkinfo}
+
+\subsection{Option B --- By hand}\label{sec:manual}
+
+\begin{enumerate}
+  \item Build the machine with Appendix~\ref{sec:fcc}, signed in as
+        \wpath{WKGAdmin}, unless step~1 of the script already passed.
+  \item Get the installer onto the machine (\S\ref{sec:getinstaller}).
+  \item Install the app, signed in as \wpath{SelfBooker}
+        (\S\ref{sec:silent}).
+  \item Lock the machine into kiosk mode (\S\ref{sec:lockdown}).
+\end{enumerate}
+
+\subsection{Get the installer onto the machine}\label{sec:getinstaller}
+
+\begin{enumerate}
+  \item Download the latest \wpath{Kiosk Setup X.Y.Z.exe} from the
+        \href{https://github.com/WeKnowTechnology/wkg-electron-app/releases}{app
+        releases page}.
+
+  \item Copy it into\\
+        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}\\
+        To copy it remotely, push it from N-central (\S\ref{sec:filepush}).
+\end{enumerate}
+
+\subsection{Push a file to kiosks from N-central}\label{sec:filepush}
+
+Use this to add or replace a file on one kiosk or many at once --- a new
+installer, an updated config. Two ways; neither needs a remote session.
+
+\paragraph{Option 1 --- File Transfer task (upload the file each time).}
+This task is not on a single device's \textbf{Add Task} menu; it is
+created at Customer or Service Organization level.
+\begin{enumerate}
+  \item In N-central, select the \textbf{customer} (not a site or
+        device), then \textbf{Configuration $\rightarrow$ Scheduled Tasks
+        $\rightarrow$ Add/Delete $\rightarrow$ Add $\rightarrow$ File
+        Transfer}. If it is missing, your role needs the
+        \textbf{Scheduled Tasks} permission.
+  \item Choose \textbf{Use LocalSystem Credentials}, \textbf{Browse} to
+        the file (under 500\,MB), and set \textbf{Remote Location} to the
+        destination folder, e.g.\
+        \wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents}.
+        Turn on the \textbf{overwrite} option to replace an older copy.
+  \item On \textbf{Targets}, tick every kiosk that needs the file.
+  \item On \textbf{Schedule}, run it now, then \textbf{Save}. Check each
+        kiosk under \textbf{Reports $\rightarrow$ Status $\rightarrow$
+        Scheduled Tasks Summary}.
+\end{enumerate}
+When the file is updated, add a new task with the new file.
+
+\paragraph{Option 2 --- Download script (update the file in one place).}
+Host the file at an HTTPS link the kiosks can reach (e.g.\ a SharePoint
+or Azure storage download link) and keep that link the same when the
+file changes. \wpath{Get-KioskFile.ps1} downloads it onto each kiosk and
+replaces any older copy.
+\begin{enumerate}
+  \item Once: add \wpath{scripts/Get-KioskFile.ps1} from the guide's
+        repository to \textbf{Script/Software Repository $\rightarrow$
+        Add $\rightarrow$ Scripting}.
+  \item At customer level, \textbf{Configuration $\rightarrow$ Scheduled
+        Tasks $\rightarrow$ Add/Delete $\rightarrow$ Add $\rightarrow$
+        Scripting}: choose the script, \textbf{LocalSystem}, and the
+        command-line parameters\\
+        \wpath{-Url '<https link>' -Destination '<folder>'}\\
+        (add \wpath{-FileName '<name>'} if the link does not end in the
+        file name).
+  \item Tick the kiosks on \textbf{Targets} and run it now. Each kiosk
+        reports \texttt{=== SUCCESS ===} with the file's SHA256, which
+        should match on every kiosk.
+\end{enumerate}
+When the file is updated, replace it at the link and re-run the task.
+
+\subsection{Install the app as \wpath{SelfBooker}}\label{sec:silent}
 
 Done \textbf{signed in as \wpath{SelfBooker}} --- the account the kiosk
 runs as.
@@ -621,20 +817,22 @@ build. If nothing prints, the port is wrong --- see
 \end{center}
 
 \begin{enumerate}\setcounter{enumi}{2}
-  \item Confirm the app wrote its identity file. Open
-        \wpath{kiosk-identity.json} (\S\ref{sec:paths}) and run through the
-        checks in \S\ref{sec:identity}. If the file is missing, create it
+  \item Confirm the app wrote its identity file and run through the
+        checks in \S\ref{sec:identity}. The installer can leave the
+        \wpath{dev.} server addresses in it; \S\ref{sec:identity} has the
+        command that changes them. If the file is missing, create it
         before continuing --- the app will not connect without it.
 
   \item Sign out of \wpath{SelfBooker}, then sign in as \wpath{WKGAdmin}
         for the lockdown below.
 \end{enumerate}
 
-\subsection{Lock the machine into kiosk mode}
+\subsection{Lock the machine into kiosk mode}\label{sec:lockdown}
 
 The Shell Launcher utility replaces the Windows desktop with the Kato app
 for the \wpath{SelfBooker} account, so the machine boots straight into the
-kiosk and there is no desktop to escape to.
+kiosk and there is no desktop to escape to. Step~3 of the setup script
+does the same thing.
 
 \begin{enumerate}
   \item Signed in as \wpath{WKGAdmin}, run\\
@@ -689,14 +887,18 @@ model.\\
 kiosk no longer \emph{In Stock}.\\
 \rowcolor{weknowgreyL}
 \emptybox & AM & Kiosk link sent to IT.\\
-\emptybox & IT & \wpath{kiosk-identity.json} present and correct.\\
+\emptybox & IT & Setup script ended in \texttt{ALL 3 STEPS PASSED}, and
+step~1's \texttt{Log} line is not \texttt{INCOMPLETE} --- or, by hand,
+Appendix~\ref{sec:fcc}'s checks all passed.\\
 \rowcolor{weknowgreyL}
+\emptybox & IT & \wpath{kiosk-identity.json} present and correct.\\
 \emptybox & IT & API key not saved anywhere --- Notepad closed without
 saving, nothing in the ticket or chat.\\
+\rowcolor{weknowgreyL}
 \emptybox & IT & Machine reboots straight into the Kato app --- no
 desktop.\\
-\rowcolor{weknowgreyL}
 \emptybox & IT & Printer prints, scanner scans, sensors respond.\\
+\rowcolor{weknowgreyL}
 \emptybox & IT & Test payment taken on the PDQ and refunded.\\
 \end{tabularx}
 \end{center}
@@ -706,50 +908,150 @@ desktop.\\
 %=====================================================================
 \wksection{When things go wrong}\label{sec:trouble}
 
+\begin{wkinfo}[The command boxes in this guide]
+Unless a box says otherwise, its commands are for the N-central remote
+connection's shell in PowerShell mode (\S\ref{sec:ncentral}). Copy the
+whole box and paste it. Each line is a complete command, so a box also
+works pasted one line at a time, and nothing in it waits for input.
+\end{wkinfo}
+
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
 \begin{tabularx}{\textwidth}{L{50mm} X}
 \rowcolor{weknownight}\color{white}\textbf{Symptom} &
 \color{white}\textbf{First thing to try}\\
 Machine boots to the Windows desktop, not the app &
-The \wpath{SLUtility} sequence was not followed. Redo it in order,
-restarting the utility between \emph{Disable User Shell} and setting the
-path.\\
+Paste step~3 again (\S\ref{sec:ncentral}). By hand, the \wpath{SLUtility}
+sequence was not followed: redo it in order, restarting the utility
+between \emph{Disable User Shell} and setting the path.\\
 \rowcolor{weknowgreyL}
+You need the Windows desktop back, e.g.\ for maintenance &
+Turn Shell Launcher off (\S\ref{sec:unlock}).\\
 App launches but will not connect &
 Work through the \wpath{kiosk-identity.json} checks in
 \S\ref{sec:identity} --- dev server URLs, a stray backtick on a value, a
 wrong Kiosk ID, or an API key regenerated after the install.\\
-Installer runs but nothing appears &
-The switches are case-sensitive and the backtick line continuations must
-be the last character on each line. Retype the command rather than
-pasting it from a chat client, or use the N-central script
-(\S\ref{sec:ncentral}).\\
-N-central script ends in \texttt{FAILED} &
-The line under \texttt{FAILED} names the cause. \emph{Malformed} means a
-value at the top of the script is mistyped; \emph{No Kiosk installer
-found} means the installer is not in
-\wpath{C:\textbackslash Users\textbackslash SelfBooker\textbackslash Documents};
-\emph{Not provisioned} usually means \wpath{SelfBooker} was not signed in.\\
 \rowcolor{weknowgreyL}
+Setup script ends in \texttt{STOPPED}, or step~1 warns &
+The message names the cause --- see \S\ref{sec:scripttrouble}.\\
+The machine restarted before you read the script's output &
+Run \wpath{Get-Content C:\textbackslash installation.log -Tail 80}.\\
+\rowcolor{weknowgreyL}
+Installer runs but nothing appears &
+By hand: the switches are case-sensitive and the backtick line
+continuations must be the last character on each line. Retype the command
+rather than pasting it from a chat client, or use the setup script
+(\S\ref{sec:ncentral}).\\
 Printer does nothing &
 The configured COM port is wrong. Find the port the printer is actually
 on and correct it in \wpath{kiosk-identity.json} --- no reinstall needed
 (\S\ref{sec:comport}).\\
+\rowcolor{weknowgreyL}
 Prep checks will not clear &
 They are marked manually on the kiosk \textbf{Edit} tab --- they do not
 clear themselves when the underlying condition is met.\\
-\rowcolor{weknowgreyL}
 Payment fails on the test transaction &
 That is a machine-build issue, not a configuration one. See
-Appendix~\ref{sec:fcc}, and its troubleshooting table.\\
+Appendix~\ref{sec:fcc}, and its troubleshooting table
+(\S\ref{sec:fcctrouble}).\\
 \end{tabularx}
 \end{center}
 
+\subsection{When the setup script stops or warns}\label{sec:scripttrouble}
+
+The line under \texttt{FAILED} says what went wrong, and the summary's
+\texttt{Failed at} line says what the step was doing. Fix it, then paste
+the setup script again --- steps already done are skipped. To restart the
+machine from the N-central shell, run \wpath{Restart-Computer -Force}.
+
+\medskip\noindent Values the script rejects:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{62mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Message} &
+\color{white}\textbf{Fix}\\
+\texttt{Set ... at the top of the script before running} &
+A value is still a placeholder. Set it in Notepad and paste again.\\
+\rowcolor{weknowgreyL}
+\texttt{Region must be one of ...} &
+Use \wpath{UK}, \wpath{DE}, \wpath{ES} or \wpath{PT}, in capitals.\\
+\texttt{KioskId is malformed}, \texttt{ApiKey is malformed} &
+Mistyped or partly copied. Copy it again from Command Centre --- an API
+key starts \wpath{kcs\_}. Generate a new key if the old one is gone.\\
+\rowcolor{weknowgreyL}
+\texttt{WorkstationId is malformed} &
+The computer name is not a workstation label. Use Option~B
+(\S\ref{sec:manual}).\\
+\end{tabularx}
+\end{center}
+
+\wkneed{10\baselineskip}\noindent Problems during the run:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}\small
+\begin{tabularx}{\textwidth}{L{62mm} X}
+\rowcolor{weknownight}\color{white}\textbf{Message} &
+\color{white}\textbf{Fix}\\
+\texttt{FCC installer still running after 10 min} &
+FreedomPay's installer is waiting on a window nobody can see. Install FCC
+by hand (Appendix~\ref{sec:fcc}), then paste again --- step~1 skips the
+install.\\
+\rowcolor{weknowgreyL}
+\texttt{FCC install failed} &
+The message names the install log. Raise it with the WKG Technology team,
+with that log.\\
+\texttt{... is not signed in and does not sign in automatically},
+\texttt{No stored sign-in password ...} &
+Sign in to Windows as \wpath{SelfBooker} on the machine, then paste
+again.\\
+\rowcolor{weknowgreyL}
+\texttt{Downloaded installer does not match ...} &
+The download was damaged. Paste again.\\
+\texttt{Config mismatch: ...} &
+The identity file does not hold the values given. Check it
+(\S\ref{sec:identity}), then paste again --- step~2 reinstalls when the
+IDs differ.\\
+\rowcolor{weknowgreyL}
+\texttt{Kato closed within 30s of starting} &
+Work through the identity file checks (\S\ref{sec:identity}).\\
+\texttt{Shell Launcher was just turned on and needs a restart} &
+Restart the machine, then paste again. Steps~1 and~2 are skipped.\\
+\rowcolor{weknowgreyL}
+Step~1 warns \texttt{FCC log has no Lane Open ...}, and its summary says
+\texttt{checks INCOMPLETE} &
+The card terminal did not confirm the build. See
+\S\ref{sec:fcctrouble} before you leave site.\\
+\end{tabularx}
+\end{center}
+
+\subsection{Getting the Windows desktop back}\label{sec:unlock}
+
+This turns Shell Launcher off, so \wpath{SelfBooker} gets the normal
+Windows desktop at the next sign-in:
+
+\begin{lstlisting}
+$sl = @{ Namespace = 'root\standardcimv2\embedded'; ClassName = 'WESL_UserSetting' }
+Invoke-CimMethod @sl -MethodName SetEnabled -Arguments @{ Enabled = $false }
+\end{lstlisting}
+
+Then restart the machine. To lock it again, paste step~3
+(\wpath{3-Shell-Lock.txt}) or the whole setup script again; by hand, use
+\wpath{SLUtility}'s \textbf{Enable Shell Launcher}.
+
 \subsection{Checking \wpath{kiosk-identity.json}}\label{sec:identity}
 
-Most \emph{will not connect} faults are in this file. Open it in Notepad
-(path in \S\ref{sec:paths}). A correct file looks like this:
+Most \emph{will not connect} faults are in this file (path in
+\S\ref{sec:paths}). To see it with the API key hidden, run:
+
+\begin{lstlisting}
+$f = 'C:\Users\SelfBooker\AppData\Roaming\WKG Kiosk\kiosk-identity.json'
+$j = Get-Content $f -Raw | ConvertFrom-Json
+if ($j.apiKey) { $j.apiKey = $j.apiKey.Substring(0,4) + '****' }
+$j | Format-List
+\end{lstlisting}
+
+A correct file looks like this:
 
 \begin{lstlisting}
 {
@@ -780,7 +1082,7 @@ in a backtick} (\wpath{`}).\\
 \rowcolor{weknowgreyL}
 \wpath{apiKey} &
 Matches the key generated for this kiosk, and does \textbf{not end in a
-backtick}.\\
+backtick}. Only its first four characters are shown.\\
 \wpath{workstationId} &
 The machine label, e.g.\ \wpath{WKG-POS-617} --- not the Kiosk ID.\\
 \rowcolor{weknowgreyL}
@@ -796,9 +1098,30 @@ line, PowerShell passes the backtick through as part of the value. Delete
 it from the file.
 \end{wkwarn}
 
-Fix any wrong value directly in the file, save, and restart the app ---
-there is no need to reinstall. The one exception is an API key that no
-longer works at all: generate a new one in Command Centre and paste that in.
+\paragraph{Fixing it.} There is no need to reinstall. To change the
+\wpath{dev.} server addresses to the live ones, run the box below. It
+keeps a copy of the file as \wpath{kiosk-identity.json.bak}, then shows the
+result with the API key hidden.
+
+\begin{lstlisting}
+$f = 'C:\Users\SelfBooker\AppData\Roaming\WKG Kiosk\kiosk-identity.json'
+Copy-Item $f "$f.bak" -Force
+$t = (Get-Content $f -Raw) -replace '://dev\.weknow\.technology', '://api.weknow.technology'
+[IO.File]::WriteAllText($f, $t, (New-Object Text.UTF8Encoding $false))
+$j = Get-Content $f -Raw | ConvertFrom-Json; $j.apiKey = 'kcs_****'; $j | Format-List
+\end{lstlisting}
+
+The copy holds the API key too, so delete it once Kato connects:
+
+\begin{lstlisting}
+Remove-Item 'C:\Users\SelfBooker\AppData\Roaming\WKG Kiosk\kiosk-identity.json.bak'
+\end{lstlisting}
+
+Fix any other wrong value in the file in Notepad and save it, or paste
+step~2 (\wpath{2-Kiosk-App.txt}) again with the right values --- it
+reinstalls when the Kiosk ID, Workstation ID or API key differ. If the API
+key no longer works at all, generate a new one in Command Centre and use
+that. Then restart the machine so Kato reads the file again.
 
 \subsection{Finding the printer's COM port}\label{sec:comport}
 
@@ -816,13 +1139,12 @@ ports, then test them.
 [System.IO.Ports.SerialPort]::GetPortNames()
 
 # ...with the device name against each, which narrows the field
-Get-CimInstance Win32_PnPEntity |
-  Where-Object { $_.Name -match 'COM\d+' } |
-  Select-Object Name, DeviceID
+$ports = Get-CimInstance Win32_PnPEntity | Where-Object { $_.Name -match 'COM\d+' }
+$ports | Select-Object Name, DeviceID
 \end{lstlisting}
 
-Or, from Command Prompt, \wpath{mode} lists every COM device with its
-current settings:
+Or, from Command Prompt (the N-central shell's \textbf{CMD} mode),
+\wpath{mode} lists every COM device with its current settings:
 
 \begin{lstlisting}
 mode
@@ -887,7 +1209,14 @@ engineer repeating this.
 
 Installing FreedomPay Freeway Commerce Connect (FCC), applying the WeKnow
 configuration and PAL bundle, and confirming the card terminal works. Done
-\textbf{once per machine}, before Part~2.
+\textbf{once per machine}, before the app is installed.
+
+\begin{wkinfo}[The setup script does all of this for you]
+Step~1 of the Part~2 setup script (\S\ref{sec:ncentral}) does this whole
+appendix and its checks, for the region you set. \wpath{1-FreedomPay.ps1}
+runs that step on its own. Use this appendix to build a machine by hand,
+or to check or fix what the script did.
+\end{wkinfo}
 
 \subsection{What you need}
 
@@ -899,10 +1228,13 @@ Do everything in this appendix signed in as \wpath{WKGAdmin}.
 \rowcolor{weknownight}\color{white}\textbf{Item} &
 \color{white}\textbf{Where it comes from}\\
 FCC installer &
-Internal mirror: \wpath{https://dev.weknowlondon.uk/SSM/freedompay/}\\
+Internal mirror: \wpath{https://dev.weknowlondon.uk/SSM/freedompay/}.
+The scripts download it from
+\wpath{https://wkgdevstore.blob.core.windows.net/kiosk/FCC/}.\\
 \rowcolor{weknowgreyL}
-UK config + PAL bundle &
-Same mirror.\\
+Config + PAL bundle for the region &
+UK from the same mirror. The scripts take UK, DE, ES or PT from the same
+place as the installer.\\
 PDQ (card terminal) &
 Connected to the machine --- you cannot verify the build without it.\\
 \end{tabularx}
@@ -983,7 +1315,7 @@ successful package push and a \textbf{PalWriteSucceeded} at the latest
 timestamp. The machine is now ready for Part~2 (\S\ref{sec:part2}).
 \end{wkinfo}
 
-\subsection{When the build goes wrong}
+\subsection{When the build goes wrong}\label{sec:fcctrouble}
 
 \begin{center}
 \renewcommand{\arraystretch}{1.35}\small
@@ -991,18 +1323,59 @@ timestamp. The machine is now ready for Part~2 (\S\ref{sec:part2}).
 \rowcolor{weknownight}\color{white}\textbf{Symptom} &
 \color{white}\textbf{First thing to try}\\
 No \emph{Lane Open} in the log &
-The terminal is not being detected. Check the cable, restart the client
-service, then power-cycle the terminal.\\
+The terminal is not being detected. Check the cable, then restart the
+services with the first box below --- it waits up to a minute for a new
+\emph{Lane Open}. Still nothing: power-cycle the terminal and run it
+again.\\
 \rowcolor{weknowgreyL}
+No \emph{Lane Open} after the setup script built the machine &
+Check the PDQ driver is installed. The script's silent FCC install copies
+the driver's installer, \wpath{FreewayMsrDriverExe.exe}, into the FCC
+folder (\wpath{C:\textbackslash Program Files (x86)\textbackslash FreedomPay\textbackslash FreewayCommerceConnect})
+but does not run it. Signed in as \wpath{WKGAdmin} with the PDQ plugged
+in, run it from there. Then clear the PAL record (second box below) and
+paste step~1 again, so the package is pushed to the terminal.\\
 No \emph{Successfully pushed} or \emph{PalWriteSucceeded} &
 Confirm the \wpath{Atlas\textbackslash PAL} registry key was deleted
 \emph{before} the config and PAL folders were copied in, then restart the
-services in order (\wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}).\\
+services in order (\wpath{FreewayServerService} $\rightarrow$ \wpath{FreewayClientService}).
+After the setup script: clear the PAL record and paste step~1 again.\\
+\rowcolor{weknowgreyL}
+Step~1 says the PAL package is \texttt{already taken}, but the terminal
+does not have it &
+Step~1 records the last package it ran and does not run it again. Clear
+the record (second box below), then paste step~1 again.\\
 Services will not stay running &
 A partially copied bundle or an unsupported version of FCC is the usual cause. Reinstall a known good version of FCC. Recopy the \wpath{config}
 and \wpath{PAL} folders and restart the services in order.\\
 \end{tabularx}
 \end{center}
+
+\paragraph{Restart the FCC services and wait for \emph{Lane Open}.}
+This restarts the server service, then the client service --- their
+Windows names are \wpath{FCCServerSvc} and \wpath{FCCClientSvc}. It shows
+both are running, then watches the FCC log for up to 60 seconds:
+
+\begin{lstlisting}
+$log = 'C:\ProgramData\FreedomPay\Freeway Commerce Connect\log'
+$n = { @(Get-ChildItem $log -File | Select-String -Pattern 'Lane Open').Count }
+$before = & $n
+Restart-Service FCCServerSvc -Force; Restart-Service FCCClientSvc -Force
+Get-Service FCCServerSvc, FCCClientSvc | Format-Table Name, Status
+$ok = $false
+for ($i = 0; $i -lt 30 -and -not $ok; $i++) { Start-Sleep 2; $ok = (& $n) -gt $before }
+if ($ok) { 'Lane Open - terminal detected' } else { 'No new Lane Open after 60s' }
+\end{lstlisting}
+
+\emph{No new Lane Open after 60s}: check the PDQ cable and driver, then
+power-cycle the terminal.
+
+\paragraph{Clear step~1's PAL record.} The next run of step~1 then runs
+the PAL package again:
+
+\begin{lstlisting}
+reg delete "HKLM\SOFTWARE\WeKnow\Kiosk" /v PalPackage /f /reg:64
+\end{lstlisting}
 
 \begin{wkinfo}[Still stuck?]
 Zip the whole \wpath{log} folder, note the workstation serial and the
@@ -1051,25 +1424,24 @@ the full detail is in the sections above.
 \vspace{4pt}
 \footnotesize
 \begin{enumerate}[leftmargin=6mm,itemsep=3pt]
-  \item \emptybox\ Confirm the machine is built --- FCC installed and
-        verified (Appendix~\ref{sec:fcc}).
-  \item \emptybox\ Sign in to Windows as \wpath{SelfBooker}.
-  \item \emptybox\ Copy the latest installer into
-        \wpath{SelfBooker\textbackslash Documents}.
+  \item \emptybox\ PDQ plugged in. Computer name is the Workstation ID.
+        \wpath{SelfBooker} signed in or signs in automatically.
   \item \emptybox\ From the kiosk link: copy the \textbf{Kiosk ID};
         generate the \textbf{API key}. Use it at once --- never save it.
-  \item \emptybox\ Run the N-central script, or the silent install below.
-  \item \emptybox\ Check \wpath{kiosk-identity.json} --- IDs, API key, no
-        trailing backtick, \wpath{api.} not \wpath{dev.} URLs.
-  \item \emptybox\ Sign out; sign in as \wpath{WKGAdmin}.
-  \item \emptybox\ \wpath{SLUtility}: \textbf{Disable User Shell}.
-  \item \emptybox\ Close and reopen \wpath{SLUtility}. Do not skip.
-  \item \emptybox\ Select \wpath{SelfBooker}, set the shell path,
-        keep Action 3.
-  \item \emptybox\ \textbf{Set User Shell}, then \textbf{Enable Shell
-        Launcher}.
-  \item \emptybox\ Sign in as \wpath{SelfBooker}; reboot and confirm the
-        app comes back.
+  \item \emptybox\ N-central remote connection: \textbf{System Shell},
+        PowerShell mode.
+  \item \emptybox\ Open \wpath{setup\_kiosk.ps1}; copy it into Notepad;
+        set \wpath{\$Region}, \wpath{\$KioskId}, \wpath{\$ApiKey}.
+  \item \emptybox\ Copy it all; close Notepad without saving; paste it
+        into the shell.
+  \item \emptybox\ Wait for \texttt{ALL 3 STEPS PASSED}. Step~1's
+        \texttt{Log} line must not say \texttt{INCOMPLETE}.
+  \item \emptybox\ It restarts into Kato. Missed the output? It is in
+        \wpath{C:\textbackslash installation.log}.
+  \item \emptybox\ \texttt{STOPPED}? Fix it (\S\ref{sec:scripttrouble})
+        and paste again --- done steps are skipped.
+  \item \emptybox\ By hand instead: Appendix~\ref{sec:fcc}, the silent
+        install below, then \wpath{SLUtility} (\S\ref{sec:lockdown}).
   \item \emptybox\ Test print, test scan, test payment.
 \end{enumerate}
 \end{minipage}
@@ -1094,11 +1466,11 @@ Printer COM port & \wpath{COM8} unless the AM says otherwise.\\
 \end{center}
 
 \vspace{4pt}
-\noindent{\footnotesize\textbf{Silent install} --- two ways, same result.
-Either run the command below in PowerShell, signed in as
-\wpath{SelfBooker}; or run the full \wpath{Install-Kiosk.txt} script from
-the N-central System Shell in PowerShell mode (\S\ref{sec:ncentral}),
-which also validates the values and checks the install.}
+\noindent{\footnotesize\textbf{Silent install by hand} --- run in
+PowerShell, signed in as \wpath{SelfBooker}, from the folder holding the
+installer (\S\ref{sec:silent}). Then check \wpath{kiosk-identity.json}
+--- IDs, API key, no trailing backtick, \wpath{api.} not \wpath{dev.}
+URLs (\S\ref{sec:identity}).}
 
 \begin{lstlisting}
 & ".\Kiosk Setup X.Y.Z.exe" /S /KIOSKID={KIOSK_ID} /WORKSTATIONID={WKG-POS-XXX} /APIKEY={API_KEY} /PRINTER=COM8
@@ -1117,6 +1489,10 @@ Shell Launcher utility &
 Find the printer port &
 List with \wpath{mode}, then \wpath{DIR > COM3} from Command Prompt.
 Fix in \wpath{kiosk-identity.json} --- no reinstall.\\
+\rowcolor{weknowgreyL}
+Setup script log &
+\wpath{C:\textbackslash installation.log} --- read it with
+\wpath{Get-Content C:\textbackslash installation.log -Tail 80}.\\
 \end{tabularx}
 \end{center}
 
